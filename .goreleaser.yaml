@@ -14,11 +14,11 @@ builds:
     goos:
       - linux
       - windows
-      - darwin
+      # - darwin
     goarch:
       - amd64
-      - arm
-      - arm64
+      # - arm
+      # - arm64
 
 archives:
   - name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
