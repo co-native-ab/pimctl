@@ -20,6 +20,30 @@ As Moltke may have said, if he spoke English and wrote code:
 
 > No CLI tool survives first contact with developers typing commands you never thought they would.
 
+## Installing
+
+### Windows
+
+```powershell
+$Version = "v0.0.1-alpha.1"
+$TempDir = New-TemporaryFile | % { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
+Invoke-WebRequest "https://github.com/co-native-ab/pimctl/releases/download/${Version}/pimctl-windows-amd64.zip" -OutFile "${TempDir}\pimctl-windows-amd64.zip"
+Expand-Archive "${TempDir}\pimctl-windows-amd64.zip" -DestinationPath "${TempDir}"
+Move-Item "${TempDir}\pimctl.exe" "${ENV:LOCALAPPDATA}\Microsoft\WindowsApps\"
+New-Item -Type Directory -Path "${ENV:USERPROFILE}\.IdentityService"
+```
+
+### Linux
+
+```shell
+VERSION="v0.0.1-alpha.1"
+TEMP_DIR=$(mktemp -d)
+curl -L "https://github.com/co-native-ab/pimctl/releases/download/${VERSION}/pimctl-linux-amd64.zip" -o "${TEMP_DIR}/pimctl-linux-amd64.zip"
+unzip "${TEMP_DIR}/pimctl-linux-amd64.zip" -d "${TEMP_DIR}"
+chmod +x "${TEMP_DIR}/pimctl"
+sudo mv "${TEMP_DIR}/pimctl" /usr/local/bin/pimctl
+```
+
 ## FAQ
 
 ### How do I use pimctl?
