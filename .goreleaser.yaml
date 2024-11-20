@@ -1,0 +1,27 @@
+project_name: pimctl
+builds:
+  - main: ./
+    binary: pimctl
+    ldflags:
+      - -w -s -X main.Version={{ .Env.VERSION }} -X main.Revision={{ .Env.REVISION }} -X main.Created={{ .Env.CREATED }}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm
+      - arm64
+archives:
+  - name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
+    format: zip
+    files:
+      - LICENSE
+      - README.md
+    wrap_in_directory: false
+checksum:
+  name_template: "checksums.txt"
+changelog:
+  sort: asc
