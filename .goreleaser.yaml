@@ -3,7 +3,7 @@ builds:
   - main: ./
     binary: pimctl
     ldflags:
-      - -w -s -X main.Version={{ .Env.VERSION }} -X main.Revision={{ .Env.REVISION }} -X main.Created={{ .Env.CREATED }}
+      - -w -s
     env:
       - CGO_ENABLED=0
     goos:
