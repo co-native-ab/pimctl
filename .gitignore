@@ -104,3 +104,4 @@ terraform.rc
 #
 
 .tmp/
+dist/

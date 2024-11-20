@@ -1,4 +1,9 @@
-project_name: pimctl
+version: 2
+
+before:
+  hooks:
+    - go mod tidy
+
 builds:
   - main: ./
     binary: pimctl
@@ -14,6 +19,7 @@ builds:
       - amd64
       - arm
       - arm64
+
 archives:
   - name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
     format: zip
@@ -21,7 +27,13 @@ archives:
       - LICENSE
       - README.md
     wrap_in_directory: false
+
 checksum:
   name_template: "checksums.txt"
+
 changelog:
   sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
