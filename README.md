@@ -25,24 +25,29 @@ As Moltke may have said, if he spoke English and wrote code:
 ### Windows
 
 ```powershell
-$Version = "v0.0.1-alpha.1"
+$Version = "0.0.1-alpha.2"
+$Arch = "amd64"
 $TempDir = New-TemporaryFile | % { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
-Invoke-WebRequest "https://github.com/co-native-ab/pimctl/releases/download/${Version}/pimctl-windows-amd64.zip" -OutFile "${TempDir}\pimctl-windows-amd64.zip"
-Expand-Archive "${TempDir}\pimctl-windows-amd64.zip" -DestinationPath "${TempDir}"
-Move-Item "${TempDir}\pimctl.exe" "${ENV:LOCALAPPDATA}\Microsoft\WindowsApps\"
+Invoke-WebRequest "https://github.com/co-native-ab/pimctl/releases/download/v${Version}/pimctl_${Version}_windows_${Arch}.zip" -OutFile "${TempDir}\pimctl_${Version}_windows_${Arch}.zip"
+Expand-Archive "${TempDir}\pimctl_${Version}_windows_${Arch}.zip" -DestinationPath "${TempDir}"
+Move-Item "${TempDir}\bin\pimctl.exe" "${ENV:LOCALAPPDATA}\Microsoft\WindowsApps\"
 New-Item -Type Directory -Path "${ENV:USERPROFILE}\.IdentityService"
 ```
 
 ### Linux
 
 ```shell
-VERSION="v0.0.1-alpha.1"
+VERSION="0.0.1-alpha.2"
+ARCH="amd64"
 TEMP_DIR=$(mktemp -d)
-curl -L "https://github.com/co-native-ab/pimctl/releases/download/${VERSION}/pimctl-linux-amd64.zip" -o "${TEMP_DIR}/pimctl-linux-amd64.zip"
-unzip "${TEMP_DIR}/pimctl-linux-amd64.zip" -d "${TEMP_DIR}"
-chmod +x "${TEMP_DIR}/pimctl"
-sudo mv "${TEMP_DIR}/pimctl" /usr/local/bin/pimctl
+curl -L "https://github.com/co-native-ab/pimctl/releases/download/v${VERSION}/pimctl_${VERSION}_linux_${ARCH}.tar.gz" -o "${TEMP_DIR}/pimctl_${VERSION}_linux_${ARCH}.tar.gz"
+tar xzvf "${TEMP_DIR}/pimctl_${VERSION}_linux_${ARCH}.tar.gz" -C "${TEMP_DIR}"
+sudo mv "${TEMP_DIR}/pimctl_${VERSION}_linux_${ARCH}/bin/pimctl" /usr/local/bin/pimctl
 ```
+
+### MacOS
+
+Not yet tested, but available for download on the [release page](https://github.com/co-native-ab/pimctl/releases). Should be kind of the same way as with Linux.
 
 ## FAQ
 

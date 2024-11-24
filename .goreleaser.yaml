@@ -1,39 +1,60 @@
-version: 2
+project_name: pimctl
 
 before:
   hooks:
     - go mod tidy
 
 builds:
-  - main: ./
-    binary: pimctl
+  - id: macos #build:macos
+    goos: [darwin]
+    goarch: [amd64, arm64]
+    env:
+      - CGO_ENABLED=1
+    binary: bin/pimctl
+    main: ./
     ldflags:
-      - -w -s
+      - -s -w
+
+  - id: linux #build:linux
+    goos: [linux]
+    goarch: [arm, amd64, arm64]
     env:
       - CGO_ENABLED=0
-    goos:
-      - linux
-      - windows
-      # - darwin
-    goarch:
-      - amd64
-      # - arm
-      # - arm64
+    binary: bin/pimctl
+    main: ./
+    ldflags:
+      - -s -w
+
+  - id: windows #build:windows
+    goos: [windows]
+    goarch: [amd64, arm64]
+    binary: bin/pimctl
+    main: ./
+    ldflags:
+      - -s -w
 
 archives:
-  - name_template: "{{ .ProjectName }}-{{ .Os }}-{{ .Arch }}"
-    format: zip
+  - id: linux-archive
+    builds: [linux]
+    name_template: "pimctl_{{ .Version }}_linux_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: true
+    format: tar.gz
+    rlcp: true
     files:
       - LICENSE
-      - README.md
+  - id: macos-archive
+    builds: [macos]
+    name_template: "pimctl_{{ .Version }}_macOS_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
+    wrap_in_directory: true
+    format: zip
+    rlcp: true
+    files:
+      - LICENSE
+  - id: windows-archive
+    builds: [windows]
+    name_template: "pimctl_{{ .Version }}_windows_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: false
-
-checksum:
-  name_template: "checksums.txt"
-
-changelog:
-  sort: asc
-  filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+    format: zip
+    rlcp: true
+    files:
+      - LICENSE

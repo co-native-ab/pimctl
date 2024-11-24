@@ -1,31 +1,151 @@
-name: Release binary
+name: Release binaries
+run-name: ${{ github.ref_name }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref_name }}
+  cancel-in-progress: true
 
 on:
-  release:
-    types:
-      - published
+  push:
+    tags:
+      - "v*"
 
 permissions:
   contents: write
   id-token: write
 
 jobs:
-  release:
+  linux:
     runs-on: ubuntu-latest
     steps:
-      - name: Clone repo
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: "^1.23"
-      - name: Run GoReleaser
+          go-version-file: "go.mod"
+      - name: Install GoReleaser
         uses: goreleaser/goreleaser-action@v6
         with:
-          distribution: goreleaser
-          version: "~> v2"
-          args: release --clean
+          version: "~1.17.1"
+          install-only: true
+      - name: Build release binaries
+        run: |
+          goreleaser_generated_config=".goreleaser.generated.yaml"
+          sed '/#build:windows/,/^$/d; /#build:macos/,/^$/d' .goreleaser.yaml > $goreleaser_generated_config
+          goreleaser release -f "$goreleaser_generated_config" --clean --skip-validate --skip-publish --release-notes="$(mktemp)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: linux
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/*.tar.gz
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~1.17.1"
+          install-only: true
+      - name: Build release binaries
+        run: |
+          goreleaser_generated_config=".goreleaser.generated.yaml"
+          sed '/#build:windows/,/^$/d; /#build:linux/,/^$/d' .goreleaser.yaml > $goreleaser_generated_config
+          goreleaser release -f "$goreleaser_generated_config" --clean --skip-validate --skip-publish --release-notes="$(mktemp)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/*.zip
+
+  windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: "go.mod"
+      - name: Install GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          version: "~1.17.1"
+          install-only: true
+      - name: Build release binaries
+        shell: bash
+        run: |
+          goreleaser_generated_config=".goreleaser.generated.yaml"
+          sed '/#build:linux/,/^$/d; /#build:macos/,/^$/d' .goreleaser.yaml > $goreleaser_generated_config
+          goreleaser release -f "$goreleaser_generated_config" --clean --skip-validate --skip-publish --release-notes="$(mktemp)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/*.zip
+
+  release:
+    runs-on: ubuntu-latest
+    needs: [linux, macos, windows]
+    steps:
+      - name: Checkout cli/cli
+        uses: actions/checkout@v4
+      - name: Merge built artifacts
+        uses: actions/download-artifact@v4
+      - name: Prepare release assets
+        run: |
+          shopt -s failglob
+          rm -rf dist
+          mkdir dist
+          mv -v {linux,macos,windows}/pimctl_* dist/
+      - name: Create the release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ github.ref_name }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          shopt -s failglob
+          pushd dist
+          shasum -a 256 pimctl_* > checksums.txt
+          mv checksums.txt pimctl_${TAG_NAME#v}_checksums.txt
+          popd
+          release_args=(
+            "$TAG_NAME"
+            --title "pimctl ${TAG_NAME#v}"
+            --target "$GITHUB_SHA"
+            --generate-notes
+          )
+          if [[ $TAG_NAME == *-* ]]; then
+            release_args+=( --prerelease )
+          else
+            release_args+=( --discussion-category "General" )
+          fi
+
+          label-assets() {
+            if [ $# -eq 0 ]; then
+              echo "usage: label-assets dist/pimctl_*" >&2
+              exit 1
+            fi
+
+            for asset; do
+              label="$(basename "$asset")"
+              label="${label%.*}"
+              label="${label%.tar}"
+              label="pimctl $(tr '_' ' ' <<<"${label#pimctl_}")"
+              printf '"%s#%s"\n' "$asset" "$label"
+            done
+          }
+
+          label-assets dist/pimctl_* | xargs gh release create "${release_args[@]}" --
