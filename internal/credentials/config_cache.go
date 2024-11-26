@@ -33,8 +33,23 @@ func getCacheFileName(profileName string) string {
 	return fmt.Sprintf("%s_%s.%s", cacheNamePrefix, profileName, cacheFileNameSuffix)
 }
 
-func GetCachedAuthenticationRecord(profileName string) (azidentity.AuthenticationRecord, error) {
+func getUserHomeDir() (string, error) {
 	userHomeDir, err := os.UserHomeDir()
+	if err != nil {
+		return "", fmt.Errorf("failed to get user home directory: %w", err)
+	}
+
+	identityServiceDirectoryPath := filepath.Join(userHomeDir, identityServiceDirectoryName)
+	err = os.MkdirAll(identityServiceDirectoryPath, 0700)
+	if err != nil {
+		return "", fmt.Errorf("failed to create %q: %w", identityServiceDirectoryPath, err)
+	}
+
+	return userHomeDir, nil
+}
+
+func GetCachedAuthenticationRecord(profileName string) (azidentity.AuthenticationRecord, error) {
+	userHomeDir, err := getUserHomeDir()
 	if err != nil {
 		return azidentity.AuthenticationRecord{}, fmt.Errorf("failed to get user home directory: %w", err)
 	}
@@ -49,7 +64,7 @@ func GetCachedAuthenticationRecord(profileName string) (azidentity.Authenticatio
 }
 
 func ClearCache(profileName string) error {
-	userHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := getUserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
@@ -87,7 +102,7 @@ type configCache struct {
 }
 
 func (c *configCache) Store(profileName string) error {
-	userHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := getUserHomeDir()
 	if err != nil {
 		return fmt.Errorf("failed to get user home directory: %w", err)
 	}
@@ -111,7 +126,7 @@ func (c *configCache) Store(profileName string) error {
 }
 
 func getCacheConfig(profileName string) (*configCache, error) {
-	userHomeDir, err := os.UserHomeDir()
+	userHomeDir, err := getUserHomeDir()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user home directory: %w", err)
 	}
