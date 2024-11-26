@@ -38,7 +38,7 @@ archives:
     builds: [linux]
     name_template: "pimctl_{{ .Version }}_linux_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: false
-    strip_binary_directory: true
+    strip_parent_binary_folder: true
     format: tar.gz
     rlcp: true
     files:
@@ -47,7 +47,7 @@ archives:
     builds: [macos]
     name_template: "pimctl_{{ .Version }}_macOS_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: false
-    strip_binary_directory: true
+    strip_parent_binary_folder: true
     format: zip
     rlcp: true
     files:
@@ -56,7 +56,7 @@ archives:
     builds: [windows]
     name_template: "pimctl_{{ .Version }}_windows_{{ .Arch }}{{ if .Arm }}v{{ .Arm }}{{ end }}"
     wrap_in_directory: false
-    strip_binary_directory: true
+    strip_parent_binary_folder: true
     format: zip
     rlcp: true
     files:
