@@ -105,3 +105,4 @@ terraform.rc
 
 .tmp/
 dist/
+bin/

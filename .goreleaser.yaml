@@ -13,7 +13,7 @@ builds:
     binary: bin/pimctl
     main: ./
     ldflags:
-      - -s -w
+      - -s -w -X github.com/co-native-ab/pimctl/internal/build.Version={{.Version}} -X github.com/co-native-ab/pimctl/internal/build.Date={{time "2006-01-02"}}
 
   - id: linux #build:linux
     goos: [linux]
@@ -23,7 +23,7 @@ builds:
     binary: bin/pimctl
     main: ./
     ldflags:
-      - -s -w
+      - -s -w -X github.com/co-native-ab/pimctl/internal/build.Version={{.Version}} -X github.com/co-native-ab/pimctl/internal/build.Date={{time "2006-01-02"}}
 
   - id: windows #build:windows
     goos: [windows]
@@ -31,7 +31,7 @@ builds:
     binary: bin/pimctl
     main: ./
     ldflags:
-      - -s -w
+      - -s -w -X github.com/co-native-ab/pimctl/internal/build.Version={{.Version}} -X github.com/co-native-ab/pimctl/internal/build.Date={{time "2006-01-02"}}
 
 archives:
   - id: linux-archive

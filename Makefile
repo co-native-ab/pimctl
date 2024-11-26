@@ -1,8 +1,5 @@
 SHELL := /bin/bash
-
-VERSION ?= "v0.0.0-dev"
-REVISION ?= ""
-CREATED ?= ""
+.ONESHELL:
 
 .PHONY: all
 .SILENT: all
@@ -43,4 +40,6 @@ cover:
 .PHONY: build
 .SILENT: build
 build:
-	CGO_ENABLED=0 go build -ldflags "-w -s" -o bin/pimctl ./main.go
+	VERSION=$$(git describe --exact-match --tags --always --dirty)
+	DATE=$$(date '+%Y-%m-%d')
+	CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/co-native-ab/pimctl/internal/build.Version=$${VERSION} -X github.com/co-native-ab/pimctl/internal/build.Date=$${DATE}" -o bin/pimctl ./
