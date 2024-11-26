@@ -39,7 +39,6 @@ $TempDir = New-TemporaryFile | % { Remove-Item $_; New-Item -ItemType Directory 
 Invoke-WebRequest "https://github.com/co-native-ab/pimctl/releases/download/v${Version}/pimctl_${Version}_windows_${Arch}.zip" -OutFile "${TempDir}\pimctl_${Version}_windows_${Arch}.zip"
 Expand-Archive "${TempDir}\pimctl_${Version}_windows_${Arch}.zip" -DestinationPath "${TempDir}"
 Move-Item "${TempDir}\pimctl.exe" "${ENV:LOCALAPPDATA}\Microsoft\WindowsApps\"
-New-Item -Type Directory -Path "${ENV:USERPROFILE}\.IdentityService"
 ```
 
 ### Linux
