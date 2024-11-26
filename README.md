@@ -25,24 +25,33 @@ As Moltke may have said, if he spoke English and wrote code:
 ### Windows
 
 ```powershell
-$Version = "0.0.1-alpha.2"
-$Arch = "amd64"
+$LatestTag = (Invoke-RestMethod -Uri "https://api.github.com/repos/co-native-ab/pimctl/releases" `
+    | Where-Object { $_.prerelease -eq $true }) `
+    | Select-Object -First 1 -ExpandProperty tag_name
+$Version = $LatestTag -replace "^v", ""
+$Arch = (Get-CimInstance Win32_ComputerSystem).SystemType
+switch ($Arch) {
+    "x64-based PC" { $Arch = "amd64" }
+    "ARM64-based PC" { $Arch = "arm64" }
+    default { throw "Unsupported architecture: $Arch" }
+}
 $TempDir = New-TemporaryFile | % { Remove-Item $_; New-Item -ItemType Directory -Path $_ }
 Invoke-WebRequest "https://github.com/co-native-ab/pimctl/releases/download/v${Version}/pimctl_${Version}_windows_${Arch}.zip" -OutFile "${TempDir}\pimctl_${Version}_windows_${Arch}.zip"
 Expand-Archive "${TempDir}\pimctl_${Version}_windows_${Arch}.zip" -DestinationPath "${TempDir}"
-Move-Item "${TempDir}\bin\pimctl.exe" "${ENV:LOCALAPPDATA}\Microsoft\WindowsApps\"
+Move-Item "${TempDir}\pimctl.exe" "${ENV:LOCALAPPDATA}\Microsoft\WindowsApps\"
 New-Item -Type Directory -Path "${ENV:USERPROFILE}\.IdentityService"
 ```
 
 ### Linux
 
 ```shell
-VERSION="0.0.1-alpha.2"
-ARCH="amd64"
+LATEST_TAG=$(curl -s https://api.github.com/repos/co-native-ab/pimctl/releases | jq -r 'map_values(select(.prerelease == true)) | first(.[].tag_name)')
+VERSION=${LATEST_TAG#"v"}
+ARCH=$(uname -m | sed -e 's/x86_64/amd64/' -e 's/armv[0-9]*/&/' -e 's/aarch64/arm64/')
 TEMP_DIR=$(mktemp -d)
 curl -L "https://github.com/co-native-ab/pimctl/releases/download/v${VERSION}/pimctl_${VERSION}_linux_${ARCH}.tar.gz" -o "${TEMP_DIR}/pimctl_${VERSION}_linux_${ARCH}.tar.gz"
 tar xzvf "${TEMP_DIR}/pimctl_${VERSION}_linux_${ARCH}.tar.gz" -C "${TEMP_DIR}"
-sudo mv "${TEMP_DIR}/pimctl_${VERSION}_linux_${ARCH}/bin/pimctl" /usr/local/bin/pimctl
+sudo mv "${TEMP_DIR}/pimctl" /usr/local/bin/pimctl
 ```
 
 ### MacOS
