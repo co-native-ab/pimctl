@@ -12,6 +12,10 @@ We are building an environment where anything above read access requires develop
 
 After looking into the different options out there, none of the ones we found matched our full needs, and the idea of pimctl was born. It's built for people who have a terminal in front of them most of the time and work in environments where they regularly need to request and approve membership assignments to Entra Groups and tries to streamline that workflow.
 
+## Generated Documentation
+
+[Generated documentation](generated-docs/pimctl.md) is available for all subcommands and flags.
+
 ## Alpha Version
 
 This current version of pimctl is in a very early stage. We want to do more, test more, and make it stable. The subcommands, flags, and everything in between will most likely change a couple of times, but before we do too much, we want to see what other people need.
