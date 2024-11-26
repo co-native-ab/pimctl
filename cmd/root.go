@@ -17,11 +17,12 @@ import (
 	"github.com/spf13/viper"
 )
 
-var rootCmd = &cobra.Command{
-	Use:     "pimctl",
-	Short:   "CLI to manage Azure PIM roles and assignments",
-	Long:    "A CLI tool to manage Azure Privileged Identity Management (PIM) roles and assignments",
-	Version: fmt.Sprintf("%s (%s)", build.Version, build.Date),
+var RootCmd = &cobra.Command{
+	Use:               "pimctl",
+	Short:             "CLI to manage Azure PIM roles and assignments",
+	Long:              "A CLI tool to manage Azure Privileged Identity Management (PIM) roles and assignments",
+	Version:           fmt.Sprintf("%s (%s)", build.Version, build.Date),
+	DisableAutoGenTag: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		command := getCommand(cmd.CommandPath())
 		switch command {
@@ -38,7 +39,7 @@ var rootCmd = &cobra.Command{
 }
 
 func Execute() {
-	err := rootCmd.Execute()
+	err := RootCmd.Execute()
 	if err != nil {
 		os.Exit(1)
 	}
@@ -46,13 +47,13 @@ func Execute() {
 
 func init() {
 	viper.AutomaticEnv()
-	envPrefix := strings.ToUpper(rootCmd.Use)
+	envPrefix := strings.ToUpper(RootCmd.Use)
 	viper.SetEnvPrefix(envPrefix)
-	rootCmd.PersistentFlags().StringP("profile", "p", "default", fmt.Sprintf("The cache profile name for pimctl. Enables running multiple sessions with different users at the same time. [env: %s_PROFILE]", envPrefix))
-	viper.BindPFlag("PROFILE", rootCmd.PersistentFlags().Lookup("profile"))
-	rootCmd.AddCommand(account.Cmd)
-	rootCmd.AddCommand(group.Cmd)
-	rootCmd.AddCommand(login.Cmd)
+	RootCmd.PersistentFlags().StringP("profile", "p", "default", fmt.Sprintf("The cache profile name for pimctl. Enables running multiple sessions with different users at the same time. [env: %s_PROFILE]", envPrefix))
+	viper.BindPFlag("PROFILE", RootCmd.PersistentFlags().Lookup("profile"))
+	RootCmd.AddCommand(account.Cmd)
+	RootCmd.AddCommand(group.Cmd)
+	RootCmd.AddCommand(login.Cmd)
 }
 
 func getCommand(input string) string {

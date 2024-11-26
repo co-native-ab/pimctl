@@ -37,6 +37,12 @@ cover:
 	go test -timeout 1m ./... -coverprofile=.tmp/coverage.out
 	go tool cover -html=.tmp/coverage.out	
 
+.PHONY: docs
+.SILENT: docs
+generate-docs:
+	rm generated-docs/*.md
+	go run ./generated-docs/generate-docs.go
+
 .PHONY: build
 .SILENT: build
 build:
