@@ -59,7 +59,15 @@ sudo mv "${TEMP_DIR}/pimctl" /usr/local/bin/pimctl
 
 ### MacOS
 
-Not yet tested, but available for download on the [release page](https://github.com/co-native-ab/pimctl/releases). Should be kind of the same way as with Linux.
+```shell
+LATEST_TAG=$(curl -s https://api.github.com/repos/co-native-ab/pimctl/releases | jq -r 'map_values(select(.prerelease == true)) | first(.[].tag_name)')
+VERSION=${LATEST_TAG#"v"}
+ARCH=$(uname -m | sed -e 's/x86_64/amd64/' -e 's/armv[0-9]*/&/' -e 's/aarch64/arm64/')
+TEMP_DIR=$(mktemp -d)
+curl -L "https://github.com/co-native-ab/pimctl/releases/download/v${VERSION}/pimctl_${VERSION}_macOS_${ARCH}.zip" -o "${TEMP_DIR}/pimctl_${VERSION}_macOS_${ARCH}.zip"
+tar xzvf "${TEMP_DIR}/pimctl_${VERSION}_macOS_${ARCH}.zip" -C "${TEMP_DIR}"
+sudo mv "${TEMP_DIR}/pimctl" /usr/local/bin/pimctl
+```
 
 ## FAQ
 
