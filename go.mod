@@ -12,7 +12,7 @@ require (
 	github.com/charmbracelet/glamour v0.7.0
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/cli/cli/v2 v2.61.0
-	github.com/cli/go-gh/v2 v2.11.0
+	github.com/cli/go-gh/v2 v2.11.1
 	github.com/lestrrat-go/jwx v1.2.30
 	github.com/microsoft/kiota-abstractions-go v1.7.0
 	github.com/microsoft/kiota-serialization-json-go v1.0.8
