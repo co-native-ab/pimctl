@@ -3,7 +3,7 @@ module github.com/co-native-ab/pimctl
 go 1.23.1
 
 require (
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.15.0
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity/cache v0.3.0
 	github.com/PaesslerAG/jsonpath v0.1.1
@@ -14,9 +14,9 @@ require (
 	github.com/cli/cli/v2 v2.61.0
 	github.com/cli/go-gh/v2 v2.11.0
 	github.com/lestrrat-go/jwx v1.2.30
-	github.com/microsoft/kiota-abstractions-go v1.7.0
+	github.com/microsoft/kiota-abstractions-go v1.8.1
 	github.com/microsoft/kiota-serialization-json-go v1.0.8
-	github.com/microsoftgraph/msgraph-sdk-go v1.51.0
+	github.com/microsoftgraph/msgraph-sdk-go v1.53.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
@@ -91,8 +91,8 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
-	github.com/std-uritemplate/std-uritemplate/go v0.0.57 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1 // indirect
+	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/yuin/goldmark v1.5.4 // indirect
 	github.com/yuin/goldmark-emoji v1.0.2 // indirect
