@@ -3,9 +3,11 @@ package menu
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/glamour"
 	"github.com/co-native-ab/pimctl/internal/cmdhelper"
+	"github.com/co-native-ab/pimctl/internal/graph"
 	"github.com/spf13/cobra"
 )
 
@@ -33,16 +35,16 @@ func eligibleGroupsMenu(ctx context.Context) error {
 		return fmt.Errorf("failed to get eligible groups: %w", err)
 	}
 
-	chooseGroupResult, err := chooseGroup(groupEligibleAssignments)
+	selectedGroups, quit, err := chooseGroups(groupEligibleAssignments)
 	if err != nil {
 		return fmt.Errorf("failed to choose group: %w", err)
 	}
 
-	if chooseGroupResult.quit {
+	if quit {
 		return nil
 	}
 
-	justificationResult, err := getJustification()
+	justificationResult, err := getJustification(selectedGroups)
 	if err != nil {
 		return fmt.Errorf("failed to get justification: %w", err)
 	}
@@ -51,39 +53,39 @@ func eligibleGroupsMenu(ctx context.Context) error {
 		return nil
 	}
 
-	selectedGroupID := chooseGroupResult.selectedGroupID
-	selectedGroupDisplayName := chooseGroupResult.selectedGroupDisplayName
 	justification := justificationResult.textInput.Value()
-	status, err := cmdhelper.PIMGroupAssignmentScheduleRequest(ctx, graphClient, 0, selectedGroupID, justification)
-	if err != nil {
-		return fmt.Errorf("failed to schedule group assignment request: %w", err)
+	statuses := []string{}
+	for _, group := range selectedGroups {
+		status, err := cmdhelper.PIMGroupAssignmentScheduleRequest(ctx, graphClient, 0, group.GroupID, justification)
+		if err != nil {
+			return fmt.Errorf("failed to schedule group assignment request for %s: %w", group.Group.DisplayName, err)
+		}
+		statuses = append(statuses, status)
 	}
 
-	renderOutput(selectedGroupID, selectedGroupDisplayName, justification, status)
+	renderOutput(selectedGroups, justification, statuses)
 
 	return nil
 }
 
-func renderOutput(selectedGroupID, selectedGroupDisplayName, justification, status string) error {
+func renderOutput(selectedGroups graph.GroupEligibleAssignments, justification string, statuses []string) error {
 	r, _ := glamour.NewTermRenderer(
 		glamour.WithAutoStyle(),
 		glamour.WithWordWrap(128),
 	)
 
-	in := fmt.Sprintf(`# PIM Group Assignment Request
+	builder := &strings.Builder{}
+	builder.WriteString("# PIM Group Assignment Request\n\n")
+	builder.WriteString("## Request Status\n\n")
+	builder.WriteString("| Group Name | Group ID | Status |\n")
+	builder.WriteString("|---|---|---|\n")
+	for i, group := range selectedGroups {
+		builder.WriteString(fmt.Sprintf("| %s | %s | %s |\n", group.Group.DisplayName, group.GroupID, statuses[i]))
+	}
+	builder.WriteString("\n## Justification\n\n")
+	builder.WriteString(fmt.Sprintf("  > %s\n", justification))
 
-## Request Status
-
-| Group Name | Group ID | Status |
-|---|---|---|
-| %s | %s | %s |
-
-## Justification
-
-  > %s
-`, selectedGroupDisplayName, selectedGroupID, status, justification)
-
-	out, err := r.Render(in)
+	out, err := r.Render(builder.String())
 	if err != nil {
 		return fmt.Errorf("failed to render output: %w", err)
 	}

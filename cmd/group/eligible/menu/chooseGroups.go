@@ -54,8 +54,9 @@ func longestStringLength[T any](property string, defaultLength int, input []T) i
 	return maxLength
 }
 
-func chooseGroup(groupEligibleAssignments graph.GroupEligibleAssignments) (chooseGroupModel, error) {
+func chooseGroups(groupEligibleAssignments graph.GroupEligibleAssignments) (graph.GroupEligibleAssignments, bool, error) {
 	columns := []table.Column{
+		{Title: "", Width: 3},
 		{Title: "Role", Width: longestStringLength("accessId", 10, groupEligibleAssignments)},
 		{Title: "Group", Width: longestStringLength("group.displayName", 10, groupEligibleAssignments)},
 		{Title: "Group Type", Width: 13},
@@ -67,6 +68,7 @@ func chooseGroup(groupEligibleAssignments graph.GroupEligibleAssignments) (choos
 	rows := []table.Row{}
 	for _, groupEligibleAssignment := range groupEligibleAssignments {
 		rows = append(rows, table.Row{
+			"[ ]",
 			titleCase(groupEligibleAssignment.AccessID),
 			groupEligibleAssignment.Group.DisplayName,
 			groupEligibleAssignment.Group.GroupType(),
@@ -76,11 +78,22 @@ func chooseGroup(groupEligibleAssignments graph.GroupEligibleAssignments) (choos
 		})
 	}
 
+	keyMap := table.DefaultKeyMap()
+	pageDownKeys := []string{}
+	for _, v := range keyMap.PageDown.Keys() {
+		if v == " " {
+			continue
+		}
+		pageDownKeys = append(pageDownKeys, v)
+	}
+	keyMap.PageDown.SetKeys(pageDownKeys...)
+
 	t := table.New(
 		table.WithColumns(columns),
 		table.WithRows(rows),
 		table.WithFocused(true),
 		table.WithHeight(7),
+		table.WithKeyMap(keyMap),
 	)
 
 	s := table.DefaultStyles()
@@ -95,36 +108,43 @@ func chooseGroup(groupEligibleAssignments graph.GroupEligibleAssignments) (choos
 		Bold(false)
 	t.SetStyles(s)
 
-	chooseGroupResultRaw, err := tea.NewProgram(initChooseGroupModel(t)).Run()
+	chooseGroupResultRaw, err := tea.NewProgram(initChooseGroupModel(t, groupEligibleAssignments)).Run()
 	if err != nil {
-		return chooseGroupModel{}, fmt.Errorf("failed to run menu: %w", err)
+		return graph.GroupEligibleAssignments{}, false, fmt.Errorf("failed to run menu: %w", err)
 	}
 
-	chooseGroupResult, ok := chooseGroupResultRaw.(chooseGroupModel)
+	chooseGroupResult, ok := chooseGroupResultRaw.(chooseGroupsModel)
 	if !ok {
-		return chooseGroupModel{}, fmt.Errorf("failed to cast choosen group result to model")
+		return graph.GroupEligibleAssignments{}, false, fmt.Errorf("failed to cast choosen group result to model")
 	}
 
-	return chooseGroupResult, nil
+	selectedGroups := graph.GroupEligibleAssignments{}
+	for _, v := range chooseGroupResult.selected {
+		selectedGroups = append(selectedGroups, v)
+	}
+
+	return selectedGroups, chooseGroupResult.quit, nil
 }
 
-func initChooseGroupModel(t table.Model) chooseGroupModel {
-	return chooseGroupModel{
-		table: t,
+func initChooseGroupModel(t table.Model, choices graph.GroupEligibleAssignments) chooseGroupsModel {
+	return chooseGroupsModel{
+		table:    t,
+		choices:  choices,
+		selected: map[int]graph.GroupEligibleAssignment{},
 	}
 }
 
-type chooseGroupModel struct {
-	table                    table.Model
-	selectedGroupID          string
-	selectedGroupDisplayName string
-	success                  bool
-	quit                     bool
+type chooseGroupsModel struct {
+	table    table.Model
+	choices  graph.GroupEligibleAssignments
+	selected map[int]graph.GroupEligibleAssignment
+	success  bool
+	quit     bool
 }
 
-func (m chooseGroupModel) Init() tea.Cmd { return nil }
+func (m chooseGroupsModel) Init() tea.Cmd { return nil }
 
-func (m chooseGroupModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m chooseGroupsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -132,9 +152,16 @@ func (m chooseGroupModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "q", "esc", "ctrl+c":
 			m.quit = true
 			return m, tea.Quit
+		case " ":
+			current := m.choices[m.table.Cursor()]
+			if _, ok := m.selected[m.table.Cursor()]; ok {
+				delete(m.selected, m.table.Cursor())
+			} else {
+				m.selected[m.table.Cursor()] = current
+			}
 		case "enter":
-			m.selectedGroupID = m.table.SelectedRow()[5]
-			m.selectedGroupDisplayName = m.table.SelectedRow()[1]
+			current := m.choices[m.table.Cursor()]
+			m.selected[m.table.Cursor()] = current
 			m.success = true
 			return m, tea.Quit
 		}
@@ -143,10 +170,21 @@ func (m chooseGroupModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m chooseGroupModel) View() string {
+func (m chooseGroupsModel) View() string {
 	if m.quit || m.success {
 		return ""
 	}
 
-	return baseStyle.Render(m.table.View()) + "\n  " + m.table.HelpView() + "\n"
+	rows := []table.Row{}
+	for i, row := range m.table.Rows() {
+		if _, ok := m.selected[i]; ok {
+			row[0] = "[x]"
+		} else {
+			row[0] = "[ ]"
+		}
+		rows = append(rows, row)
+	}
+	m.table.SetRows(rows)
+
+	return baseStyle.Render(m.table.View()) + "\n  " + m.table.HelpView() + "\n" + "  (space to select, enter to confirm, q to quit)\n"
 }

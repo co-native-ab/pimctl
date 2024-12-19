@@ -2,13 +2,15 @@ package menu
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/co-native-ab/pimctl/internal/graph"
 )
 
-func getJustification() (justificationModel, error) {
-	p := tea.NewProgram(initialRequestEligibleGroupModel())
+func getJustification(selectedGroups graph.GroupEligibleAssignments) (justificationModel, error) {
+	p := tea.NewProgram(initialRequestEligibleGroupModel(selectedGroups))
 	rawResult, err := p.Run()
 	if err != nil {
 		return justificationModel{}, fmt.Errorf("failed to run program: %w", err)
@@ -35,13 +37,14 @@ type (
 )
 
 type justificationModel struct {
-	textInput textinput.Model
-	err       error
-	success   bool
-	quit      bool
+	textInput      textinput.Model
+	selectedGroups graph.GroupEligibleAssignments
+	err            error
+	success        bool
+	quit           bool
 }
 
-func initialRequestEligibleGroupModel() justificationModel {
+func initialRequestEligibleGroupModel(selectedGroups graph.GroupEligibleAssignments) justificationModel {
 	ti := textinput.New()
 	ti.Placeholder = "Justification"
 	ti.Focus()
@@ -49,8 +52,9 @@ func initialRequestEligibleGroupModel() justificationModel {
 	ti.Width = 64
 
 	return justificationModel{
-		textInput: ti,
-		err:       nil,
+		textInput:      ti,
+		selectedGroups: selectedGroups,
+		err:            nil,
 	}
 }
 
@@ -86,9 +90,16 @@ func (m justificationModel) View() string {
 		return ""
 	}
 
-	return fmt.Sprintf(
-		"Justification for requesting group?\n\n%s\n\n%s",
-		m.textInput.View(),
-		"(esc to quit)",
-	) + "\n"
+	builder := &strings.Builder{}
+	builder.WriteString("Justification for request(s) for the following group(s):\n")
+	for _, group := range m.selectedGroups {
+		builder.WriteString(fmt.Sprintf("  %s\n", group.Group.DisplayName))
+	}
+	builder.WriteString("\n")
+	builder.WriteString(m.textInput.View())
+	builder.WriteString("\n\n")
+	builder.WriteString("(esc to quit)")
+	builder.WriteString("\n")
+
+	return builder.String()
 }
