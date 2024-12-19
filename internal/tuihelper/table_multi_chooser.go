@@ -1,27 +1,25 @@
-package menu
+package tuihelper
 
 import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/PaesslerAG/jsonpath"
 	"github.com/charmbracelet/bubbles/table"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"github.com/co-native-ab/pimctl/internal/graph"
 )
 
 var baseStyle = lipgloss.NewStyle().
 	BorderStyle(lipgloss.NormalBorder()).
 	BorderForeground(lipgloss.Color("240"))
 
-func titleCase(s string) string {
+func TitleCase(s string) string {
 	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
-func longestStringLength[T any](property string, defaultLength int, input []T) int {
+func LongestStringLength[T any](property string, defaultLength int, input []T) int {
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
 		return defaultLength
@@ -54,28 +52,16 @@ func longestStringLength[T any](property string, defaultLength int, input []T) i
 	return maxLength
 }
 
-func chooseGroups(groupEligibleAssignments graph.GroupEligibleAssignments) (graph.GroupEligibleAssignments, bool, error) {
+func TableMultiChooser[T any](choices []T, inputColumns []table.Column, inputRows []table.Row) ([]T, bool, error) {
 	columns := []table.Column{
 		{Title: "", Width: 3},
-		{Title: "Role", Width: longestStringLength("accessId", 10, groupEligibleAssignments)},
-		{Title: "Group", Width: longestStringLength("group.displayName", 10, groupEligibleAssignments)},
-		{Title: "Group Type", Width: 13},
-		{Title: "Membership", Width: 10},
-		{Title: "End Time", Width: len(time.Now().Local().Format(time.RFC3339))},
-		{Title: "Group ID", Width: 0},
 	}
+	columns = append(columns, inputColumns...)
 
 	rows := []table.Row{}
-	for _, groupEligibleAssignment := range groupEligibleAssignments {
-		rows = append(rows, table.Row{
-			"[ ]",
-			titleCase(groupEligibleAssignment.AccessID),
-			groupEligibleAssignment.Group.DisplayName,
-			groupEligibleAssignment.Group.GroupType(),
-			titleCase(groupEligibleAssignment.MemberType),
-			groupEligibleAssignment.ScheduleInfo.EndTime(),
-			groupEligibleAssignment.GroupID,
-		})
+	for _, inputRow := range inputRows {
+		row := append([]string{"[ ]"}, inputRow...)
+		rows = append(rows, row)
 	}
 
 	keyMap := table.DefaultKeyMap()
@@ -108,43 +94,43 @@ func chooseGroups(groupEligibleAssignments graph.GroupEligibleAssignments) (grap
 		Bold(false)
 	t.SetStyles(s)
 
-	chooseGroupResultRaw, err := tea.NewProgram(initChooseGroupModel(t, groupEligibleAssignments)).Run()
+	rawResult, err := tea.NewProgram(initMultiChooserModel(t, choices)).Run()
 	if err != nil {
-		return graph.GroupEligibleAssignments{}, false, fmt.Errorf("failed to run menu: %w", err)
+		return nil, false, fmt.Errorf("failed to run menu: %w", err)
 	}
 
-	chooseGroupResult, ok := chooseGroupResultRaw.(chooseGroupsModel)
+	result, ok := rawResult.(multiChooserModel[T])
 	if !ok {
-		return graph.GroupEligibleAssignments{}, false, fmt.Errorf("failed to cast choosen group result to model")
+		return nil, false, fmt.Errorf("failed to cast choosen group result to model")
 	}
 
-	selectedGroups := graph.GroupEligibleAssignments{}
-	for _, v := range chooseGroupResult.selected {
-		selectedGroups = append(selectedGroups, v)
+	selected := []T{}
+	for _, v := range result.selected {
+		selected = append(selected, v)
 	}
 
-	return selectedGroups, chooseGroupResult.quit, nil
+	return selected, result.quit, nil
 }
 
-func initChooseGroupModel(t table.Model, choices graph.GroupEligibleAssignments) chooseGroupsModel {
-	return chooseGroupsModel{
+func initMultiChooserModel[T any](t table.Model, choices []T) multiChooserModel[T] {
+	return multiChooserModel[T]{
 		table:    t,
 		choices:  choices,
-		selected: map[int]graph.GroupEligibleAssignment{},
+		selected: map[int]T{},
 	}
 }
 
-type chooseGroupsModel struct {
+type multiChooserModel[T any] struct {
 	table    table.Model
-	choices  graph.GroupEligibleAssignments
-	selected map[int]graph.GroupEligibleAssignment
+	choices  []T
+	selected map[int]T
 	success  bool
 	quit     bool
 }
 
-func (m chooseGroupsModel) Init() tea.Cmd { return nil }
+func (m multiChooserModel[T]) Init() tea.Cmd { return nil }
 
-func (m chooseGroupsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m multiChooserModel[T]) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
@@ -170,7 +156,7 @@ func (m chooseGroupsModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, cmd
 }
 
-func (m chooseGroupsModel) View() string {
+func (m multiChooserModel[T]) View() string {
 	if m.quit || m.success {
 		return ""
 	}

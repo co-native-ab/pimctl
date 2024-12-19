@@ -4,10 +4,13 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/glamour"
 	"github.com/co-native-ab/pimctl/internal/cmdhelper"
 	"github.com/co-native-ab/pimctl/internal/graph"
+	"github.com/co-native-ab/pimctl/internal/tuihelper"
 	"github.com/spf13/cobra"
 )
 
@@ -66,6 +69,31 @@ func eligibleGroupsMenu(ctx context.Context) error {
 	renderOutput(selectedGroups, justification, statuses)
 
 	return nil
+}
+
+func chooseGroups(groupEligibleAssignments graph.GroupEligibleAssignments) (graph.GroupEligibleAssignments, bool, error) {
+	columns := []table.Column{
+		{Title: "Role", Width: tuihelper.LongestStringLength("accessId", 10, groupEligibleAssignments)},
+		{Title: "Group", Width: tuihelper.LongestStringLength("group.displayName", 10, groupEligibleAssignments)},
+		{Title: "Group Type", Width: 13},
+		{Title: "Membership", Width: 10},
+		{Title: "End Time", Width: len(time.Now().Local().Format(time.RFC3339))},
+		{Title: "Group ID", Width: 0},
+	}
+
+	rows := []table.Row{}
+	for _, groupEligibleAssignment := range groupEligibleAssignments {
+		rows = append(rows, table.Row{
+			tuihelper.TitleCase(groupEligibleAssignment.AccessID),
+			groupEligibleAssignment.Group.DisplayName,
+			groupEligibleAssignment.Group.GroupType(),
+			tuihelper.TitleCase(groupEligibleAssignment.MemberType),
+			groupEligibleAssignment.ScheduleInfo.EndTime(),
+			groupEligibleAssignment.GroupID,
+		})
+	}
+
+	return tuihelper.TableMultiChooser(groupEligibleAssignments, columns, rows)
 }
 
 func renderOutput(selectedGroups graph.GroupEligibleAssignments, justification string, statuses []string) error {
