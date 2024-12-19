@@ -14,7 +14,7 @@ require (
 	github.com/cli/cli/v2 v2.63.2
 	github.com/cli/go-gh/v2 v2.11.1
 	github.com/lestrrat-go/jwx v1.2.30
-	github.com/microsoft/kiota-abstractions-go v1.8.0
+	github.com/microsoft/kiota-abstractions-go v1.8.1
 	github.com/microsoft/kiota-serialization-json-go v1.0.8
 	github.com/microsoftgraph/msgraph-sdk-go v1.51.0
 	github.com/spf13/cobra v1.8.1
@@ -90,7 +90,7 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.6.0 // indirect
-	github.com/std-uritemplate/std-uritemplate/go v1.0.6 // indirect
+	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1 // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/yuin/goldmark v1.7.4 // indirect
