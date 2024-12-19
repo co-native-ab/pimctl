@@ -9,8 +9,8 @@ import (
 	"github.com/co-native-ab/pimctl/internal/graph"
 )
 
-func getJustification(requestor string, group string, reviewResult graph.ReviewResult) (justificationModel, error) {
-	p := tea.NewProgram(initialRequestEligibleGroupModel(requestor, group, reviewResult))
+func getJustification(selectedGroups graph.GroupAssignmentRequests, reviewResult graph.ReviewResult) (justificationModel, error) {
+	p := tea.NewProgram(initialRequestEligibleGroupModel(selectedGroups, reviewResult))
 	rawResult, err := p.Run()
 	if err != nil {
 		return justificationModel{}, fmt.Errorf("failed to run program: %w", err)
@@ -37,9 +37,8 @@ type (
 )
 
 type justificationModel struct {
-	requestor    string
-	group        string
-	reviewResult graph.ReviewResult
+	selectedGroups graph.GroupAssignmentRequests
+	reviewResult   graph.ReviewResult
 
 	textInput textinput.Model
 	err       error
@@ -47,7 +46,7 @@ type justificationModel struct {
 	quit      bool
 }
 
-func initialRequestEligibleGroupModel(requestor string, group string, reviewResult graph.ReviewResult) justificationModel {
+func initialRequestEligibleGroupModel(selectedGroups graph.GroupAssignmentRequests, reviewResult graph.ReviewResult) justificationModel {
 	ti := textinput.New()
 	ti.Placeholder = "Justification"
 	ti.Focus()
@@ -55,11 +54,10 @@ func initialRequestEligibleGroupModel(requestor string, group string, reviewResu
 	ti.Width = 64
 
 	return justificationModel{
-		requestor:    requestor,
-		group:        group,
-		reviewResult: reviewResult,
-		textInput:    ti,
-		err:          nil,
+		selectedGroups: selectedGroups,
+		reviewResult:   reviewResult,
+		textInput:      ti,
+		err:            nil,
 	}
 }
 
@@ -100,7 +98,13 @@ func (m justificationModel) View() string {
 	if m.reviewResult == graph.DenyReviewResult {
 		reviewString = "denying"
 	}
-	fmt.Fprintf(s, "Reason for %s %s assignment to %s:\n\n", reviewString, m.requestor, m.group)
+
+	fmt.Fprintf(s, "Reason for %s assignment(s):\n", reviewString)
+	for _, selectedGroup := range m.selectedGroups {
+		fmt.Fprintf(s, "  %s by %s\n", selectedGroup.Group.DisplayName, selectedGroup.Principal.DisplayName)
+		fmt.Fprintf(s, "  > %q\n\n", selectedGroup.Justification)
+	}
+
 	fmt.Fprintf(s, "%s\n\n", m.textInput.View())
 	fmt.Fprintf(s, "(esc to quit)\n")
 
