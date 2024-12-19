@@ -3,10 +3,14 @@ package menu
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/glamour"
 	"github.com/co-native-ab/pimctl/internal/cmdhelper"
+	"github.com/co-native-ab/pimctl/internal/graph"
+	"github.com/co-native-ab/pimctl/internal/tuihelper"
 	"github.com/spf13/cobra"
 )
 
@@ -34,21 +38,16 @@ func groupsApprovalMenu(ctx context.Context) error {
 		return fmt.Errorf("failed to get approval requests: %w", err)
 	}
 
-	chooseGroupResult, err := chooseGroup(groupApprovalRequests, time.Now())
+	chooseGroupsResult, quit, err := chooseGroups(groupApprovalRequests, time.Now())
 	if err != nil {
 		return fmt.Errorf("failed to choose group: %w", err)
 	}
 
-	if chooseGroupResult.quit {
+	if quit {
 		return nil
 	}
 
-	principalDisplayName := chooseGroupResult.selectedGroup.Principal.DisplayName
-	requestJustification := chooseGroupResult.selectedGroup.Justification
-	groupDisplayName := chooseGroupResult.selectedGroup.Group.DisplayName
-	groupID := chooseGroupResult.selectedGroup.Group.ID
-	approvalID := chooseGroupResult.selectedGroup.ApprovalID
-	reviewResult, err := getReviewResult(principalDisplayName, groupDisplayName, requestJustification)
+	reviewResult, err := getReviewResult(chooseGroupsResult)
 	if err != nil {
 		return fmt.Errorf("failed to get review result: %w", err)
 	}
@@ -58,7 +57,7 @@ func groupsApprovalMenu(ctx context.Context) error {
 	}
 
 	reviewResultChoice := reviewResult.choice
-	justificationResult, err := getJustification(principalDisplayName, groupDisplayName, reviewResultChoice)
+	justificationResult, err := getJustification(chooseGroupsResult, reviewResultChoice)
 	if err != nil {
 		return fmt.Errorf("failed to get justification: %w", err)
 	}
@@ -68,44 +67,74 @@ func groupsApprovalMenu(ctx context.Context) error {
 	}
 
 	justification := justificationResult.textInput.Value()
-	err = graphClient.PIMGroupAssignmentApprovalByApprovalID(ctx, approvalID, justification, reviewResultChoice)
-	if err != nil {
-		return fmt.Errorf("failed to approve or deny group assignment request: %w", err)
+	for _, groupApprovalRequest := range chooseGroupsResult {
+		err = graphClient.PIMGroupAssignmentApprovalByApprovalID(ctx, groupApprovalRequest.ApprovalID, justification, reviewResultChoice)
+		if err != nil {
+			return fmt.Errorf("failed to approve or deny group assignment request: %w", err)
+		}
 	}
 
-	renderOutput(principalDisplayName, requestJustification, groupID, approvalID, groupDisplayName, justification, reviewResultChoice.String())
+	renderOutput(chooseGroupsResult, justification, reviewResultChoice.String())
 
 	return nil
 }
 
-func renderOutput(requestor, requestJustification, selectedGroupID, approvalID, selectedGroupDisplayName, justification, reviewResult string) error {
+func chooseGroups(groupApprovalRequests graph.GroupAssignmentRequests, now time.Time) (graph.GroupAssignmentRequests, bool, error) {
+	columns := []table.Column{
+		{Title: "Role", Width: tuihelper.LongestStringLength("accessId", 10, groupApprovalRequests)},
+		{Title: "Requestor", Width: tuihelper.LongestStringLength("principal.displayName", 10, groupApprovalRequests)},
+		{Title: "Request Time", Width: len(time.Now().Local().Format(time.RFC3339))},
+		{Title: "Group", Width: tuihelper.LongestStringLength("group.displayName", 10, groupApprovalRequests)},
+		{Title: "Group Type", Width: 13},
+		{Title: "Reason", Width: tuihelper.LongestStringLength("justification", 10, groupApprovalRequests)},
+		{Title: "Ticket Number", Width: tuihelper.LongestStringLength("ticketInfo.ticketNumber", 10, groupApprovalRequests)},
+		{Title: "Ticket System", Width: tuihelper.LongestStringLength("ticketInfo.ticketSystem", 10, groupApprovalRequests)},
+		{Title: "Start Time", Width: len(time.Now().Local().Format(time.RFC3339))},
+		{Title: "End Time", Width: len(time.Now().Local().Format(time.RFC3339))},
+		{Title: "Approval ID", Width: 0},
+	}
+
+	rows := []table.Row{}
+	for _, groupApprovalRequest := range groupApprovalRequests {
+		scheduleInfo := groupApprovalRequest.ScheduleInfo
+		scheduleInfo.StartDateTime = now
+		rows = append(rows, table.Row{
+			tuihelper.TitleCase(groupApprovalRequest.AccessID),
+			groupApprovalRequest.Principal.DisplayName,
+			groupApprovalRequest.RequestTime(),
+			groupApprovalRequest.Group.DisplayName,
+			groupApprovalRequest.Group.GroupType(),
+			groupApprovalRequest.Justification,
+			groupApprovalRequest.TicketInfo.TicketNumber,
+			groupApprovalRequest.TicketInfo.TicketSystem,
+			scheduleInfo.StartTime(),
+			scheduleInfo.EndTime(),
+			groupApprovalRequest.ApprovalID,
+		})
+	}
+
+	return tuihelper.TableMultiChooser(groupApprovalRequests, columns, rows)
+}
+
+func renderOutput(selectedGroups graph.GroupAssignmentRequests, justification, reviewResult string) error {
 	r, _ := glamour.NewTermRenderer(
 		glamour.WithAutoStyle(),
 		glamour.WithWordWrap(128),
 	)
 
-	in := fmt.Sprintf(`# PIM Group Approval
+	s := &strings.Builder{}
+	s.WriteString("# PIM Group Approval\n\n")
+	s.WriteString("## Request Status\n\n")
+	fmt.Fprintf(s, "Review Result: %s\n\n", reviewResult)
+	s.WriteString("| Requested By | Group Name | Justification |\n")
+	s.WriteString("|---|---|---|\n")
+	for _, groupApprovalRequest := range selectedGroups {
+		fmt.Fprintf(s, "| %s | %s | %s |\n", groupApprovalRequest.Principal.DisplayName, groupApprovalRequest.Group.DisplayName, groupApprovalRequest.Justification)
+	}
+	s.WriteString("\n## Justification\n\n")
+	fmt.Fprintf(s, "  > %s\n", justification)
 
-## Requested by
-
-  > %s
-
-## Request Justification
-
-  > %q
-
-## Approval Status
-
-| Group Name | Group ID | Approval ID | Review Result |
-|---|---|---|---|
-| %s | %s | %s | %s |
-
-## Justification
-
-  > %s
-`, requestor, requestJustification, selectedGroupDisplayName, selectedGroupID, approvalID, reviewResult, justification)
-
-	out, err := r.Render(in)
+	out, err := r.Render(s.String())
 	if err != nil {
 		return fmt.Errorf("failed to render output: %w", err)
 	}

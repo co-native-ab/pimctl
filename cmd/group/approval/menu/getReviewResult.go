@@ -10,11 +10,9 @@ import (
 
 var reviewResultChoices = []graph.ReviewResult{graph.ApproveReviewResult, graph.DenyReviewResult}
 
-func getReviewResult(requestor string, group string, requestJustification string) (reviewResultModel, error) {
+func getReviewResult(selectedGroups graph.GroupAssignmentRequests) (reviewResultModel, error) {
 	p := tea.NewProgram(reviewResultModel{
-		requestor:            requestor,
-		group:                group,
-		requestJustification: requestJustification,
+		selectedGroups: selectedGroups,
 	})
 	reviewResultRaw, err := p.Run()
 	if err != nil {
@@ -30,9 +28,7 @@ func getReviewResult(requestor string, group string, requestJustification string
 }
 
 type reviewResultModel struct {
-	requestor            string
-	group                string
-	requestJustification string
+	selectedGroups graph.GroupAssignmentRequests
 
 	cursor  int
 	choice  graph.ReviewResult
@@ -80,8 +76,11 @@ func (m reviewResultModel) View() string {
 	}
 
 	s := &strings.Builder{}
-	fmt.Fprintf(s, "%s have requested assignment to %s:\n\n", m.requestor, m.group)
-	fmt.Fprintf(s, "Justification:\n  > %q\n\n", m.requestJustification)
+	s.WriteString("Review the following requests\n")
+	for _, selectedGroup := range m.selectedGroups {
+		fmt.Fprintf(s, "  %s by %s\n", selectedGroup.Group.DisplayName, selectedGroup.Principal.DisplayName)
+		fmt.Fprintf(s, "  > %q\n\n", selectedGroup.Justification)
+	}
 
 	for i := 0; i < len(reviewResultChoices); i++ {
 		if m.cursor == i {
