@@ -5,7 +5,7 @@ go 1.23.1
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.16.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.0
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity/cache v0.3.0
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity/cache v0.3.1
 	github.com/PaesslerAG/jsonpath v0.1.1
 	github.com/charmbracelet/bubbles v0.20.0
 	github.com/charmbracelet/bubbletea v1.2.2
