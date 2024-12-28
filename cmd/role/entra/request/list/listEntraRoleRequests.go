@@ -15,38 +15,38 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "list",
-	Short: "List Entra role PIM requests waiting for approval from current user",
-	Long:  "List Entra role PIM request waiting for approval from current user",
-	RunE:  runListEntraRoleApprovals,
+	Short: "List all Entra role PIM requests current user can see",
+	Long:  "List all Entra role PIM requests current user can see",
+	RunE:  runListEntraRoleRequests,
 }
 
 func init() {}
 
-func runListEntraRoleApprovals(cmd *cobra.Command, _ []string) error {
-	return listEntraRoleApprovals(cmd.Context())
+func runListEntraRoleRequests(cmd *cobra.Command, _ []string) error {
+	return listEntraRoleRequests(cmd.Context())
 }
 
-func listEntraRoleApprovals(ctx context.Context) error {
+func listEntraRoleRequests(ctx context.Context) error {
 	graphClient, err := cmdhelper.NewGraphClientWithCachedCredential()
 	if err != nil {
 		return fmt.Errorf("failed to create graph client with cached credential: %w", err)
 	}
 
-	entraRoleApprovalRequests, err := graphClient.PIMEntraRoleApprovalRequests(ctx)
+	entraRoleAssignmentRequests, err := graphClient.PIMEntraRoleAssignmentRequests(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get entra role approval requests: %w", err)
+		return fmt.Errorf("failed to get entra role assignment requests: %w", err)
 	}
 
 	io := iostreams.System()
-	err = printEntraRoleApprovalRequestList(io, time.Now(), entraRoleApprovalRequests)
+	err = printEntraRoleRequestList(io, time.Now(), entraRoleAssignmentRequests)
 	if err != nil {
-		return fmt.Errorf("failed to print approval requests: %w", err)
+		return fmt.Errorf("failed to print entra role assignment requests: %w", err)
 	}
 
 	return nil
 }
 
-func printEntraRoleApprovalRequestList(io *iostreams.IOStreams, now time.Time, entraRoleApprovalRequests graph.EntraRoleAssignmentRequests) error {
+func printEntraRoleRequestList(io *iostreams.IOStreams, now time.Time, entraRoleAssignmentRequests graph.EntraRoleAssignmentRequests) error {
 	headers := []string{
 		"ROLE",
 		"REQUESTOR",
@@ -60,7 +60,7 @@ func printEntraRoleApprovalRequestList(io *iostreams.IOStreams, now time.Time, e
 	}
 
 	table := tableprinter.New(io, tableprinter.WithHeader(headers...))
-	for _, entraRoleAssignmentRequest := range entraRoleApprovalRequests {
+	for _, entraRoleAssignmentRequest := range entraRoleAssignmentRequests {
 		table.AddField(entraRoleAssignmentRequest.RoleDefinition.DisplayName) // "ROLE"
 		table.AddField(entraRoleAssignmentRequest.Principal.DisplayName)      // "REQUESTOR"
 		table.AddField(entraRoleAssignmentRequest.RequestTime())              // "REQUEST TIME"

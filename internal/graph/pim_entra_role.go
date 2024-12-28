@@ -164,14 +164,14 @@ func (g EntraRoleAssignmentRequest) Scope() string {
 
 type EntraRoleAssignmentRequests []EntraRoleAssignmentRequest
 
-// func (c *Client) PIMEntraRoleAssignmentRequests(ctx context.Context) (EntraRoleAssignmentRequests, error) {
-// 	return c.pimEntraRoleAssignmentRequests(ctx, "principal", "status eq 'PendingApproval'")
-// }
+func (c *Client) PIMEntraRoleAssignmentRequests(ctx context.Context) (EntraRoleAssignmentRequests, error) {
+	return c.pimEntraRoleAssignmentRequests(ctx, "principal", "status eq 'PendingApproval'")
+}
 
 func (c *Client) pimEntraRoleAssignmentRequests(ctx context.Context, filterOn string, queryFilter string) (EntraRoleAssignmentRequests, error) {
 	roleAssignmentScheduleRequestsResponse, err := c.client.RoleManagement().Directory().RoleAssignmentScheduleRequests().FilterByCurrentUserWithOn(to.Ptr(filterOn)).Get(ctx, &rolemanagement.DirectoryRoleAssignmentScheduleRequestsFilterByCurrentUserWithOnRequestBuilderGetRequestConfiguration{
 		QueryParameters: &rolemanagement.DirectoryRoleAssignmentScheduleRequestsFilterByCurrentUserWithOnRequestBuilderGetQueryParameters{
-			Expand: []string{"roleDefinition", "principal", "directoryScope", "activatedUsing"},
+			Expand: []string{"roleDefinition", "principal"},
 			Filter: to.Ptr(queryFilter),
 		},
 	})
