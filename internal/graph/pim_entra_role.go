@@ -3,6 +3,7 @@ package graph
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/microsoftgraph/msgraph-sdk-go/rolemanagement"
@@ -66,54 +67,62 @@ func (c *Client) PIMEntraRoleEligibleAssignments(ctx context.Context) (EntraRole
 	return entraRoleEligibleAssignments, nil
 }
 
-// type EntraRoleActiveAssignment struct {
-// 	ID                   string    `json:"id"`
-// 	AcessID              string    `json:"accessId"`
-// 	AssignmentScheduleId string    `json:"assignmentScheduleId"`
-// 	AssignmentType       string    `json:"assignmentType"`
-// 	EndDateTime          time.Time `json:"endDateTime"`
-// 	GroupID              string    `json:"groupId"`
-// 	PricipalID           string    `json:"principalId"`
-// 	MemberType           string    `json:"memberType"`
-// 	StartDateTime        time.Time `json:"startDateTime"`
-// 	Group                Group     `json:"group"`
-// 	Principal            User      `json:"principal"`
-// }
+type EntraRoleActiveAssignment struct {
+	ID                       string         `json:"id"`
+	AssignmentType           string         `json:"assignmentType"`
+	DirectoryScopeID         string         `json:"directoryScopeId"`
+	MemberType               string         `json:"memberType"`
+	PrincipalID              string         `json:"principalId"`
+	RoleDefinitionID         string         `json:"roleDefinitionId"`
+	RoleAssignmentOriginID   string         `json:"roleAssignmentOriginId"`
+	RoleAssignmentScheduleID string         `json:"roleAssignmentScheduleId"`
+	Principal                User           `json:"principal"`
+	RoleDefinition           RoleDefinition `json:"roleDefinition"`
+	StartDateTime            time.Time      `json:"startDateTime"`
+	EndDateTime              time.Time      `json:"endDateTime"`
+}
 
-// func (g EntraRoleActiveAssignment) EndTime() string {
-// 	return g.EndDateTime.Local().Format(time.RFC3339)
-// }
+func (g EntraRoleActiveAssignment) EndTime() string {
+	return g.EndDateTime.Local().Format(time.RFC3339)
+}
 
-// type EntraRoleActiveAssignments []EntraRoleActiveAssignment
+func (g EntraRoleActiveAssignment) Scope() string {
+	if g.DirectoryScopeID == "/" {
+		return "Directory"
+	}
+	return g.DirectoryScopeID
+}
 
-// func (c *Client) PIMEntraRoleActiveAssignments(ctx context.Context) (EntraRoleActiveAssignments, error) {
-// 	assignmentScheduleInstancesResponse, err := c.client.IdentityGovernance().PrivilegedAccess().Group().AssignmentScheduleInstances().FilterByCurrentUserWithOn(to.Ptr("principal")).Get(ctx, &identitygovernance.PrivilegedAccessGroupAssignmentScheduleInstancesFilterByCurrentUserWithOnRequestBuilderGetRequestConfiguration{
-// 		QueryParameters: &identitygovernance.PrivilegedAccessGroupAssignmentScheduleInstancesFilterByCurrentUserWithOnRequestBuilderGetQueryParameters{
-// 			Expand: []string{"group", "principal"},
-// 		},
-// 	})
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to get assignment schedule instances: %w", err)
-// 	}
+type EntraRoleActiveAssignments []EntraRoleActiveAssignment
 
-// 	graphValues := assignmentScheduleInstancesResponse.GetValue()
-// 	if len(graphValues) == 0 {
-// 		return nil, nil
-// 	}
+func (c *Client) PIMEntraRoleActiveAssignments(ctx context.Context) (EntraRoleActiveAssignments, error) {
+	roleAssignmentScheduleInstancesResponse, err := c.client.RoleManagement().Directory().RoleAssignmentScheduleInstances().FilterByCurrentUserWithOn(to.Ptr("principal")).Get(ctx, &rolemanagement.DirectoryRoleAssignmentScheduleInstancesFilterByCurrentUserWithOnRequestBuilderGetRequestConfiguration{
+		QueryParameters: &rolemanagement.DirectoryRoleAssignmentScheduleInstancesFilterByCurrentUserWithOnRequestBuilderGetQueryParameters{
+			Expand: []string{"roleDefinition", "principal"},
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get role assignment schedule instances: %w", err)
+	}
 
-// 	var groupActiveAssignments EntraRoleActiveAssignments
-// 	for _, graphValue := range graphValues {
-// 		value := EntraRoleActiveAssignment{}
-// 		err := unmarshalGraphValue(graphValue, &value)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("failed to unmarshal graph value: %w", err)
-// 		}
+	graphValues := roleAssignmentScheduleInstancesResponse.GetValue()
+	if len(graphValues) == 0 {
+		return nil, nil
+	}
 
-// 		groupActiveAssignments = append(groupActiveAssignments, value)
-// 	}
+	var entraRoleActiveAssignments EntraRoleActiveAssignments
+	for _, graphValue := range graphValues {
+		value := EntraRoleActiveAssignment{}
+		err := unmarshalGraphValue(graphValue, &value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal graph value: %w", err)
+		}
 
-// 	return groupActiveAssignments, nil
-// }
+		entraRoleActiveAssignments = append(entraRoleActiveAssignments, value)
+	}
+
+	return entraRoleActiveAssignments, nil
+}
 
 // type EntraRoleAssignmentRequest struct {
 // 	ID                string    `json:"id"`

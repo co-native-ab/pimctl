@@ -16,12 +16,13 @@ data "azuread_service_principal" "ms_graph" {
 
 locals {
   required_scopes = [
+    "User.Read",
     "Group.Read.All",
     "PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup",
     "PrivilegedEligibilitySchedule.Read.AzureADGroup",
     "RoleManagementPolicy.Read.AzureADGroup",
     "RoleEligibilitySchedule.Read.Directory",
-    "User.Read",
+    "RoleAssignmentSchedule.Read.Directory",
   ]
 }
 
