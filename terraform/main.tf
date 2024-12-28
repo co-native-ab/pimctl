@@ -22,7 +22,7 @@ locals {
     "PrivilegedEligibilitySchedule.Read.AzureADGroup",
     "RoleManagementPolicy.Read.AzureADGroup",
     "RoleEligibilitySchedule.Read.Directory",
-    "RoleAssignmentSchedule.Read.Directory",
+    "RoleAssignmentSchedule.ReadWrite.Directory",
   ]
 }
 

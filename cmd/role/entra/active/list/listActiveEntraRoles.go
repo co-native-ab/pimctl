@@ -56,7 +56,7 @@ func printActiveGroupsList(io *iostreams.IOStreams, entraRoleActiveAssignments g
 
 	table := tableprinter.New(io, tableprinter.WithHeader(headers...))
 	for _, entraRoleActiveAssignment := range entraRoleActiveAssignments {
-		table.AddField(tableprinter.Title(entraRoleActiveAssignment.RoleDefinition.DisplayName))
+		table.AddField(entraRoleActiveAssignment.RoleDefinition.DisplayName)
 		table.AddField(entraRoleActiveAssignment.Scope())
 		table.AddField(entraRoleActiveAssignment.MemberType)
 		table.AddField(entraRoleActiveAssignment.AssignmentType)

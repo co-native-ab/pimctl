@@ -124,76 +124,83 @@ func (c *Client) PIMEntraRoleActiveAssignments(ctx context.Context) (EntraRoleAc
 	return entraRoleActiveAssignments, nil
 }
 
-// type EntraRoleAssignmentRequest struct {
-// 	ID                string    `json:"id"`
-// 	AccessID          string    `json:"accessId"`
-// 	Action            string    `json:"action"`
-// 	ApprovalID        string    `json:"approvalId"`
-// 	CompletedDateTime time.Time `json:"completedDateTime"`
-// 	CreatedBy         struct {
-// 		User struct {
-// 			ID string `json:"id"`
-// 		} `json:"user"`
-// 	} `json:"createdBy"`
-// 	CreatedDateTime  time.Time    `json:"createdDateTime"`
-// 	Group            Group        `json:"group"`
-// 	GroupID          string       `json:"groupId"`
-// 	IsValidationOnly bool         `json:"isValidationOnly"`
-// 	Justification    string       `json:"justification"`
-// 	Principal        User         `json:"principal"`
-// 	PrincipalID      string       `json:"principalId"`
-// 	ScheduleInfo     ScheduleInfo `json:"scheduleInfo"`
-// 	Status           string       `json:"status"`
-// 	TargetSchduleID  string       `json:"targetScheduleId"`
-// 	TicketInfo       struct {
-// 		TicketNumber string `json:"ticketNumber"`
-// 		TicketSystem string `json:"ticketSystem"`
-// 	} `json:"ticketInfo"`
-// }
+type EntraRoleAssignmentRequest struct {
+	ID                string    `json:"id"`
+	Action            string    `json:"action"`
+	ApprovalID        string    `json:"approvalId"`
+	CompletedDateTime time.Time `json:"completedDateTime"`
+	CreatedBy         struct {
+		User struct {
+			ID string `json:"id"`
+		} `json:"user"`
+	} `json:"createdBy"`
+	CreatedDateTime  time.Time      `json:"createdDateTime"`
+	DirectoryScopeID string         `json:"directoryScopeId"`
+	IsValidationOnly bool           `json:"isValidationOnly"`
+	Justification    string         `json:"justification"`
+	Principal        User           `json:"principal"`
+	PrincipalID      string         `json:"principalId"`
+	RoleDefinition   RoleDefinition `json:"roleDefinition"`
+	RoleDefinitionID string         `json:"roleDefinitionId"`
+	ScheduleInfo     ScheduleInfo   `json:"scheduleInfo"`
+	Status           string         `json:"status"`
+	TargetScheduleID string         `json:"targetScheduleId"`
+	TicketInfo       struct {
+		TicketNumber string `json:"ticketNumber"`
+		TicketSystem string `json:"ticketSystem"`
+	} `json:"ticketInfo"`
+}
 
-// func (g EntraRoleAssignmentRequest) RequestTime() string {
-// 	return g.CreatedDateTime.Local().Format(time.RFC3339)
-// }
+func (g EntraRoleAssignmentRequest) RequestTime() string {
+	return g.CreatedDateTime.Local().Format(time.RFC3339)
+}
 
-// type EntraRoleAssignmentRequests []EntraRoleAssignmentRequest
+func (g EntraRoleAssignmentRequest) Scope() string {
+	if g.DirectoryScopeID == "/" {
+		return "Directory"
+	}
+	return g.DirectoryScopeID
+}
+
+type EntraRoleAssignmentRequests []EntraRoleAssignmentRequest
 
 // func (c *Client) PIMEntraRoleAssignmentRequests(ctx context.Context) (EntraRoleAssignmentRequests, error) {
 // 	return c.pimEntraRoleAssignmentRequests(ctx, "principal", "status eq 'PendingApproval'")
 // }
 
-// func (c *Client) pimEntraRoleAssignmentRequests(ctx context.Context, filterOn string, queryFilter string) (EntraRoleAssignmentRequests, error) {
-// 	assignmentScheduleRequestsResponse, err := c.client.IdentityGovernance().PrivilegedAccess().Group().AssignmentScheduleRequests().FilterByCurrentUserWithOn(to.Ptr(filterOn)).Get(ctx, &identitygovernance.PrivilegedAccessGroupAssignmentScheduleRequestsFilterByCurrentUserWithOnRequestBuilderGetRequestConfiguration{
-// 		QueryParameters: &identitygovernance.PrivilegedAccessGroupAssignmentScheduleRequestsFilterByCurrentUserWithOnRequestBuilderGetQueryParameters{
-// 			Expand: []string{"group", "principal"},
-// 			Filter: to.Ptr(queryFilter),
-// 		},
-// 	})
-// 	if err != nil {
-// 		return nil, fmt.Errorf("failed to get assignment schedule requests: %w", err)
-// 	}
+func (c *Client) pimEntraRoleAssignmentRequests(ctx context.Context, filterOn string, queryFilter string) (EntraRoleAssignmentRequests, error) {
+	roleAssignmentScheduleRequestsResponse, err := c.client.RoleManagement().Directory().RoleAssignmentScheduleRequests().FilterByCurrentUserWithOn(to.Ptr(filterOn)).Get(ctx, &rolemanagement.DirectoryRoleAssignmentScheduleRequestsFilterByCurrentUserWithOnRequestBuilderGetRequestConfiguration{
+		QueryParameters: &rolemanagement.DirectoryRoleAssignmentScheduleRequestsFilterByCurrentUserWithOnRequestBuilderGetQueryParameters{
+			Expand: []string{"roleDefinition", "principal", "directoryScope", "activatedUsing"},
+			Filter: to.Ptr(queryFilter),
+		},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get assignment schedule requests: %w", err)
+	}
 
-// 	graphValues := assignmentScheduleRequestsResponse.GetValue()
-// 	if len(graphValues) == 0 {
-// 		return nil, nil
-// 	}
+	graphValues := roleAssignmentScheduleRequestsResponse.GetValue()
+	if len(graphValues) == 0 {
+		return nil, nil
+	}
 
-// 	var groupAssignmentRequests EntraRoleAssignmentRequests
-// 	for _, graphValue := range graphValues {
-// 		value := EntraRoleAssignmentRequest{}
-// 		err := unmarshalGraphValue(graphValue, &value)
-// 		if err != nil {
-// 			return nil, fmt.Errorf("failed to unmarshal graph value: %w", err)
-// 		}
+	var entraRoleAssignmentRequests EntraRoleAssignmentRequests
+	for _, graphValue := range graphValues {
+		value := EntraRoleAssignmentRequest{}
+		err := unmarshalGraphValue(graphValue, &value)
+		if err != nil {
+			return nil, fmt.Errorf("failed to unmarshal graph value: %w", err)
+		}
 
-// 		groupAssignmentRequests = append(groupAssignmentRequests, value)
-// 	}
+		entraRoleAssignmentRequests = append(entraRoleAssignmentRequests, value)
+	}
 
-// 	return groupAssignmentRequests, nil
-// }
+	return entraRoleAssignmentRequests, nil
+}
 
-// func (c *Client) PIMEntraRoleApprovalRequests(ctx context.Context) (EntraRoleAssignmentRequests, error) {
-// 	return c.pimEntraRoleAssignmentRequests(ctx, "approver", "status eq 'PendingApproval'")
-// }
+func (c *Client) PIMEntraRoleApprovalRequests(ctx context.Context) (EntraRoleAssignmentRequests, error) {
+	return c.pimEntraRoleAssignmentRequests(ctx, "approver", "status eq 'PendingApproval'")
+}
 
 // func (c *Client) PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, principalID string, groupID string, justification string, startDateTime time.Time, durationHours string) (string, error) {
 // 	requestBody := graphmodels.NewPrivilegedAccessGroupAssignmentScheduleRequest()

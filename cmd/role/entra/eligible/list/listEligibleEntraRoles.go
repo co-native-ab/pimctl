@@ -55,7 +55,7 @@ func printEligibleGroupsList(io *iostreams.IOStreams, entraRoleEligibleAssignmen
 
 	table := tableprinter.New(io, tableprinter.WithHeader(headers...))
 	for _, entraRoleEligibleAssignment := range entraRoleEligibleAssignments {
-		table.AddField(tableprinter.Title(entraRoleEligibleAssignment.RoleDefinition.DisplayName))
+		table.AddField(entraRoleEligibleAssignment.RoleDefinition.DisplayName)
 		table.AddField(entraRoleEligibleAssignment.Scope())
 		table.AddField(entraRoleEligibleAssignment.MemberType)
 		table.AddField(entraRoleEligibleAssignment.ScheduleInfo.EndTime())
