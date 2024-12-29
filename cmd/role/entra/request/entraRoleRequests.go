@@ -1,6 +1,7 @@
 package request
 
 import (
+	"github.com/co-native-ab/pimctl/cmd/role/entra/request/create"
 	"github.com/co-native-ab/pimctl/cmd/role/entra/request/list"
 	"github.com/spf13/cobra"
 )
@@ -12,5 +13,6 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
+	Cmd.AddCommand(create.Cmd)
 	Cmd.AddCommand(list.Cmd)
 }

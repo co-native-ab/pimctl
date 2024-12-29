@@ -6,6 +6,9 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
+	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
+	"github.com/microsoftgraph/msgraph-sdk-go/policies"
 	"github.com/microsoftgraph/msgraph-sdk-go/rolemanagement"
 )
 
@@ -202,94 +205,95 @@ func (c *Client) PIMEntraRoleApprovalRequests(ctx context.Context) (EntraRoleAss
 	return c.pimEntraRoleAssignmentRequests(ctx, "approver", "status eq 'PendingApproval'")
 }
 
-// func (c *Client) PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, principalID string, groupID string, justification string, startDateTime time.Time, durationHours string) (string, error) {
-// 	requestBody := graphmodels.NewPrivilegedAccessGroupAssignmentScheduleRequest()
-// 	accessId := graphmodels.MEMBER_PRIVILEGEDACCESSGROUPRELATIONSHIPS
-// 	requestBody.SetAccessId(&accessId)
-// 	requestBody.SetPrincipalId(to.Ptr(principalID))
-// 	requestBody.SetGroupId(to.Ptr(groupID))
-// 	action := graphmodels.SELFACTIVATE_SCHEDULEREQUESTACTIONS
-// 	requestBody.SetAction(&action)
-// 	scheduleInfo := graphmodels.NewRequestSchedule()
-// 	scheduleInfo.SetStartDateTime(to.Ptr(startDateTime))
-// 	expiration := graphmodels.NewExpirationPattern()
-// 	expirationType := graphmodels.AFTERDURATION_EXPIRATIONPATTERNTYPE
-// 	expiration.SetTypeEscaped(&expirationType)
-// 	duration, err := serialization.ParseISODuration(durationHours)
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to parse ISO duration %q: %w", durationHours, err)
-// 	}
-// 	expiration.SetDuration(duration)
-// 	scheduleInfo.SetExpiration(expiration)
-// 	requestBody.SetScheduleInfo(scheduleInfo)
-// 	requestBody.SetJustification(to.Ptr(justification))
+func (c *Client) PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, principalID string, entraRoleID string, justification string, startDateTime time.Time, durationHours string) (string, error) {
+	// requestBody := graphmodels.NewPrivilegedAccessGroupAssignmentScheduleRequest()
+	requestBody := graphmodels.NewUnifiedRoleAssignmentScheduleRequest()
+	action := graphmodels.SELFACTIVATE_UNIFIEDROLESCHEDULEREQUESTACTIONS
+	requestBody.SetAction(&action)
+	requestBody.SetPrincipalId(&principalID)
+	requestBody.SetRoleDefinitionId(&entraRoleID)
+	requestBody.SetDirectoryScopeId(to.Ptr("/")) // TODO: Make scopeId configurable
+	requestBody.SetJustification(&justification)
+	scheduleInfo := graphmodels.NewRequestSchedule()
+	scheduleInfo.SetStartDateTime(to.Ptr(startDateTime))
+	expiration := graphmodels.NewExpirationPattern()
+	expirationType := graphmodels.AFTERDURATION_EXPIRATIONPATTERNTYPE
+	expiration.SetTypeEscaped(&expirationType)
+	duration, err := serialization.ParseISODuration(durationHours)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse ISO duration %q: %w", durationHours, err)
+	}
+	expiration.SetDuration(duration)
+	scheduleInfo.SetExpiration(expiration)
+	requestBody.SetScheduleInfo(scheduleInfo)
+	requestBody.SetJustification(to.Ptr(justification))
 
-// 	assignmentScheduleRequestsResponse, err := c.client.IdentityGovernance().PrivilegedAccess().Group().AssignmentScheduleRequests().Post(ctx, requestBody, &identitygovernance.PrivilegedAccessGroupAssignmentScheduleRequestsRequestBuilderPostRequestConfiguration{})
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to post assignment schedule request: %w", err)
-// 	}
+	roleAssignmentScheduleRequestsResponse, err := c.client.RoleManagement().Directory().RoleAssignmentScheduleRequests().Post(ctx, requestBody, &rolemanagement.DirectoryRoleAssignmentScheduleRequestsRequestBuilderPostRequestConfiguration{})
+	if err != nil {
+		return "", fmt.Errorf("failed to post role assignment schedule request: %w", err)
+	}
 
-// 	status := assignmentScheduleRequestsResponse.GetStatus()
-// 	if status == nil {
-// 		return "", fmt.Errorf("response status is nil")
-// 	}
+	status := roleAssignmentScheduleRequestsResponse.GetStatus()
+	if status == nil {
+		return "", fmt.Errorf("response status is nil")
+	}
 
-// 	return *status, nil
-// }
+	return *status, nil
+}
 
-// func (c *Client) PIMEntraRoleGetMaximumExpirationByGroupID(ctx context.Context, groupID string) (string, error) {
-// 	roleManagementPolicyAssignmentsResponse, err := c.client.Policies().RoleManagementPolicyAssignments().Get(context.Background(), &policies.RoleManagementPolicyAssignmentsRequestBuilderGetRequestConfiguration{
-// 		QueryParameters: &policies.RoleManagementPolicyAssignmentsRequestBuilderGetQueryParameters{
-// 			Filter: to.Ptr(fmt.Sprintf("scopeId eq '%s' and scopeType eq 'Group' and roleDefinitionId eq 'member'", groupID)),
-// 			Expand: []string{"policy($expand=rules)"},
-// 		},
-// 	})
+func (c *Client) PIMEntraRoleGetMaximumExpirationByGroupID(ctx context.Context, entraRoleID string) (string, error) {
+	roleManagementPolicyAssignmentsResponse, err := c.client.Policies().RoleManagementPolicyAssignments().Get(context.Background(), &policies.RoleManagementPolicyAssignmentsRequestBuilderGetRequestConfiguration{
+		QueryParameters: &policies.RoleManagementPolicyAssignmentsRequestBuilderGetQueryParameters{
+			Filter: to.Ptr(fmt.Sprintf("scopeId eq '/' and scopeType eq 'Directory' and roleDefinitionId eq '%s'", entraRoleID)), // TODO: Make scopeId configurable
+			Expand: []string{"policy($expand=rules)"},
+		},
+	})
 
-// 	if err != nil {
-// 		return "", fmt.Errorf("failed to get role management policy assignments: %w", err)
-// 	}
+	if err != nil {
+		return "", fmt.Errorf("failed to get role management policy assignments: %w", err)
+	}
 
-// 	values := roleManagementPolicyAssignmentsResponse.GetValue()
-// 	if len(values) != 1 {
-// 		return "", fmt.Errorf("expected 1 role management policy assignment, got %d", len(values))
-// 	}
+	values := roleManagementPolicyAssignmentsResponse.GetValue()
+	if len(values) != 1 {
+		return "", fmt.Errorf("expected 1 role management policy assignment, got %d", len(values))
+	}
 
-// 	policy := values[0].GetPolicy()
-// 	if policy == nil {
-// 		return "", fmt.Errorf("policy is nil")
-// 	}
+	policy := values[0].GetPolicy()
+	if policy == nil {
+		return "", fmt.Errorf("policy is nil")
+	}
 
-// 	rules := policy.GetRules()
-// 	if rules == nil {
-// 		return "", fmt.Errorf("rules is nil")
-// 	}
+	rules := policy.GetRules()
+	if rules == nil {
+		return "", fmt.Errorf("rules is nil")
+	}
 
-// 	if len(rules) == 0 {
-// 		return "", fmt.Errorf("no rules found")
-// 	}
+	if len(rules) == 0 {
+		return "", fmt.Errorf("no rules found")
+	}
 
-// 	for _, rule := range rules {
-// 		ruleID := rule.GetId()
-// 		if ruleID == nil || *ruleID != "Expiration_EndUser_Assignment" {
-// 			continue
-// 		}
+	for _, rule := range rules {
+		ruleID := rule.GetId()
+		if ruleID == nil || *ruleID != "Expiration_EndUser_Assignment" {
+			continue
+		}
 
-// 		value := UnifiedRoleManagementPolicyExpirationRule{}
-// 		err := unmarshalGraphValue(rule, &value)
-// 		if err != nil {
-// 			return "", fmt.Errorf("failed to unmarshal graph value: %w", err)
-// 		}
+		value := UnifiedRoleManagementPolicyExpirationRule{}
+		err := unmarshalGraphValue(rule, &value)
+		if err != nil {
+			return "", fmt.Errorf("failed to unmarshal graph value: %w", err)
+		}
 
-// 		isoDuration, err := serialization.ParseISODuration(value.MaximumDuration)
-// 		if err != nil {
-// 			return "", fmt.Errorf("failed to parse ISO duration %q: %w", value.MaximumDuration, err)
-// 		}
+		isoDuration, err := serialization.ParseISODuration(value.MaximumDuration)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse ISO duration %q: %w", value.MaximumDuration, err)
+		}
 
-// 		return isoDuration.String(), nil
-// 	}
+		return isoDuration.String(), nil
+	}
 
-// 	return "", fmt.Errorf("no expiration rule found")
-// }
+	return "", fmt.Errorf("no expiration rule found")
+}
 
 // func (c *Client) PIMEntraRoleAssignmentApprovalByApprovalID(ctx context.Context, approvalID string, justification string, reviewResult ReviewResult) error {
 // 	assignmentApprovalResponse, err := c.client.IdentityGovernance().PrivilegedAccess().Group().AssignmentApprovals().ByApprovalId(approvalID).Get(ctx, &identitygovernance.PrivilegedAccessGroupAssignmentApprovalsApprovalItemRequestBuilderGetRequestConfiguration{})

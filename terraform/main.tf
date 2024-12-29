@@ -16,13 +16,17 @@ data "azuread_service_principal" "ms_graph" {
 
 locals {
   required_scopes = [
+    # Required for both Entra Groups and Roles
     "User.Read",
     "Group.Read.All",
+    # Required for Entra Groups
     "PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup",
     "PrivilegedEligibilitySchedule.Read.AzureADGroup",
     "RoleManagementPolicy.Read.AzureADGroup",
+    # Required for Entra Roles
     "RoleEligibilitySchedule.Read.Directory",
     "RoleAssignmentSchedule.ReadWrite.Directory",
+    "RoleManagementPolicy.Read.Directory",
   ]
 }
 
