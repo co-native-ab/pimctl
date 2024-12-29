@@ -25,13 +25,15 @@ func init() {
 	Cmd.Flags().String("justification", "", "The justification for the request")
 	Cmd.MarkFlagRequired("justification")
 	Cmd.Flags().Int("duration", 0, "The duration of the request in hours (default: configured maximum duration)")
+	Cmd.Flags().String("scope-id", "/", "The scope id to request the role assignment for")
 }
 
 type createEntraRoleRequestOptions struct {
-	entraRoleName string
-	entraRoleID   string
-	justification string
-	duration      int
+	entraRoleName    string
+	entraRoleID      string
+	entraRoleScopeID string
+	justification    string
+	duration         int
 }
 
 func newCreateEntraRoleRequestOptions(flags *pflag.FlagSet) (*createEntraRoleRequestOptions, error) {
@@ -45,6 +47,11 @@ func newCreateEntraRoleRequestOptions(flags *pflag.FlagSet) (*createEntraRoleReq
 		return nil, fmt.Errorf("failed to get entra-role-id: %w", err)
 	}
 
+	entraRoleScopeID, err := flags.GetString("scope-id")
+	if err != nil {
+		return nil, fmt.Errorf("failed to get scope-id: %w", err)
+	}
+
 	justification, err := flags.GetString("justification")
 	if err != nil {
 		return nil, fmt.Errorf("failed to get justification: %w", err)
@@ -56,10 +63,11 @@ func newCreateEntraRoleRequestOptions(flags *pflag.FlagSet) (*createEntraRoleReq
 	}
 
 	return &createEntraRoleRequestOptions{
-		entraRoleName: entraRoleName,
-		entraRoleID:   entraRoleID,
-		justification: justification,
-		duration:      duration,
+		entraRoleName:    entraRoleName,
+		entraRoleID:      entraRoleID,
+		entraRoleScopeID: entraRoleScopeID,
+		justification:    justification,
+		duration:         duration,
 	}, nil
 }
 
@@ -83,7 +91,7 @@ func createEntraRoleRequest(ctx context.Context, opts *createEntraRoleRequestOpt
 		return fmt.Errorf("failed to get entra role id: %w", err)
 	}
 
-	status, err := cmdhelper.PIMEntraRoleAssignmentScheduleRequest(ctx, graphClient, opts.duration, entraRoleID, opts.justification)
+	status, err := cmdhelper.PIMEntraRoleAssignmentScheduleRequest(ctx, graphClient, opts.duration, entraRoleID, opts.justification, opts.entraRoleScopeID)
 	if err != nil {
 		return fmt.Errorf("failed to create entra role assignment requests: %w", err)
 	}

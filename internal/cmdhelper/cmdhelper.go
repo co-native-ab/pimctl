@@ -74,7 +74,7 @@ func PIMGroupAssignmentScheduleRequest(ctx context.Context, graphClient *graph.C
 	return status, nil
 }
 
-func PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, graphClient *graph.Client, flagsDuration int, entraRoleID string, justification string) (string, error) {
+func PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, graphClient *graph.Client, flagsDuration int, entraRoleID string, justification string, entraRoleScopeID string) (string, error) {
 	me, err := graphClient.Me(ctx)
 	if err != nil {
 		return "", fmt.Errorf("failed to get me: %w", err)
@@ -88,13 +88,13 @@ func PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, graphClient *gra
 	if flagsDuration != 0 {
 		duration = fmt.Sprintf("PT%dH", flagsDuration)
 	} else {
-		duration, err = graphClient.PIMEntraRoleGetMaximumExpirationByGroupID(ctx, entraRoleID)
+		duration, err = graphClient.PIMEntraRoleGetMaximumExpirationByGroupID(ctx, entraRoleID, entraRoleScopeID)
 		if err != nil {
 			return "", fmt.Errorf("failed to get entra role role management policy: %w", err)
 		}
 	}
 
-	status, err := graphClient.PIMEntraRoleAssignmentScheduleRequest(ctx, me.ID, entraRoleID, justification, time.Now(), duration)
+	status, err := graphClient.PIMEntraRoleAssignmentScheduleRequest(ctx, me.ID, entraRoleID, justification, time.Now(), duration, entraRoleScopeID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create entra role assignment requests: %w", err)
 	}

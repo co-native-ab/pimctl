@@ -205,14 +205,14 @@ func (c *Client) PIMEntraRoleApprovalRequests(ctx context.Context) (EntraRoleAss
 	return c.pimEntraRoleAssignmentRequests(ctx, "approver", "status eq 'PendingApproval'")
 }
 
-func (c *Client) PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, principalID string, entraRoleID string, justification string, startDateTime time.Time, durationHours string) (string, error) {
+func (c *Client) PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, principalID string, entraRoleID string, justification string, startDateTime time.Time, durationHours string, entraRoleScopeID string) (string, error) {
 	// requestBody := graphmodels.NewPrivilegedAccessGroupAssignmentScheduleRequest()
 	requestBody := graphmodels.NewUnifiedRoleAssignmentScheduleRequest()
 	action := graphmodels.SELFACTIVATE_UNIFIEDROLESCHEDULEREQUESTACTIONS
 	requestBody.SetAction(&action)
 	requestBody.SetPrincipalId(&principalID)
 	requestBody.SetRoleDefinitionId(&entraRoleID)
-	requestBody.SetDirectoryScopeId(to.Ptr("/")) // TODO: Make scopeId configurable
+	requestBody.SetDirectoryScopeId(&entraRoleScopeID)
 	requestBody.SetJustification(&justification)
 	scheduleInfo := graphmodels.NewRequestSchedule()
 	scheduleInfo.SetStartDateTime(to.Ptr(startDateTime))
@@ -241,10 +241,10 @@ func (c *Client) PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, prin
 	return *status, nil
 }
 
-func (c *Client) PIMEntraRoleGetMaximumExpirationByGroupID(ctx context.Context, entraRoleID string) (string, error) {
+func (c *Client) PIMEntraRoleGetMaximumExpirationByGroupID(ctx context.Context, entraRoleID string, entraRoleScopeID string) (string, error) {
 	roleManagementPolicyAssignmentsResponse, err := c.client.Policies().RoleManagementPolicyAssignments().Get(context.Background(), &policies.RoleManagementPolicyAssignmentsRequestBuilderGetRequestConfiguration{
 		QueryParameters: &policies.RoleManagementPolicyAssignmentsRequestBuilderGetQueryParameters{
-			Filter: to.Ptr(fmt.Sprintf("scopeId eq '/' and scopeType eq 'Directory' and roleDefinitionId eq '%s'", entraRoleID)), // TODO: Make scopeId configurable
+			Filter: to.Ptr(fmt.Sprintf("scopeId eq '%s' and scopeType eq 'Directory' and roleDefinitionId eq '%s'", entraRoleScopeID, entraRoleID)),
 			Expand: []string{"policy($expand=rules)"},
 		},
 	})
