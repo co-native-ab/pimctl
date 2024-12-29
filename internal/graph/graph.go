@@ -8,12 +8,14 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 	kiotajson "github.com/microsoft/kiota-serialization-json-go"
+	msgraphbetasdk "github.com/microsoftgraph/msgraph-beta-sdk-go"
 	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
 	"github.com/microsoftgraph/msgraph-sdk-go/users"
 )
 
 type Client struct {
-	client *msgraphsdk.GraphServiceClient
+	client     *msgraphsdk.GraphServiceClient
+	betaClient *msgraphbetasdk.GraphServiceClient
 }
 
 func NewClient(cred azcore.TokenCredential, scopes []string) (*Client, error) {
@@ -21,8 +23,13 @@ func NewClient(cred azcore.TokenCredential, scopes []string) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to create GraphServiceClient: %w", err)
 	}
+	betaClient, err := msgraphbetasdk.NewGraphServiceClientWithCredentials(cred, scopes)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create GraphBetaServiceClient: %w", err)
+	}
 	return &Client{
-		client: client,
+		client:     client,
+		betaClient: betaClient,
 	}, nil
 }
 

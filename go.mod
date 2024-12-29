@@ -16,6 +16,7 @@ require (
 	github.com/lestrrat-go/jwx v1.2.30
 	github.com/microsoft/kiota-abstractions-go v1.8.1
 	github.com/microsoft/kiota-serialization-json-go v1.0.9
+	github.com/microsoftgraph/msgraph-beta-sdk-go v0.116.0
 	github.com/microsoftgraph/msgraph-sdk-go v1.55.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
@@ -79,7 +80,6 @@ require (
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
 	github.com/muesli/termenv v0.15.3-0.20240618155329-98d742f6907a // indirect
-	github.com/olekukonko/tablewriter v0.0.5 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c // indirect
 	github.com/pkg/errors v0.9.1 // indirect

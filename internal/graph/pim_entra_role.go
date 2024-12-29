@@ -7,6 +7,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
+	graphmodelsbeta "github.com/microsoftgraph/msgraph-beta-sdk-go/models"
+	rolemanagementbeta "github.com/microsoftgraph/msgraph-beta-sdk-go/rolemanagement"
 	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
 	"github.com/microsoftgraph/msgraph-sdk-go/policies"
 	"github.com/microsoftgraph/msgraph-sdk-go/rolemanagement"
@@ -295,49 +297,70 @@ func (c *Client) PIMEntraRoleGetMaximumExpirationByGroupID(ctx context.Context, 
 	return "", fmt.Errorf("no expiration rule found")
 }
 
-// func (c *Client) PIMEntraRoleAssignmentApprovalByApprovalID(ctx context.Context, approvalID string, justification string, reviewResult ReviewResult) error {
-// 	assignmentApprovalResponse, err := c.client.IdentityGovernance().PrivilegedAccess().Group().AssignmentApprovals().ByApprovalId(approvalID).Get(ctx, &identitygovernance.PrivilegedAccessGroupAssignmentApprovalsApprovalItemRequestBuilderGetRequestConfiguration{})
-// 	if err != nil {
-// 		return fmt.Errorf("failed to get assignment approvals: %w", err)
-// 	}
+type RoleAssignmentApprovalStep struct {
+	ID            string `json:"id"`
+	AssignedToMe  bool   `json:"assignedToMe"`
+	ReviewResult  string `json:"reviewResult"`
+	Status        string `json:"status"`
+	Justification string `json:"justification"`
+	ReviewedBy    struct {
+		DisplayName       string `json:"displayName"`
+		ID                string `json:"id"`
+		Mail              string `json:"mail"`
+		UserPrincipalName string `json:"userPrincipalName"`
+	} `json:"reviewedBy"`
+	ReviewedDateTime time.Time `json:"reviewedDateTime"`
+}
 
-// 	value := AssignmentApproval{}
-// 	err = unmarshalGraphValue(assignmentApprovalResponse, &value)
-// 	if err != nil {
-// 		return fmt.Errorf("failed to unmarshal graph value: %w", err)
-// 	}
+type RoleAssignmentApprovalSteps []RoleAssignmentApprovalStep
 
-// 	if len(value.Stages) != 1 {
-// 		return fmt.Errorf("expected 1 approval stage, got %d", len(value.Stages))
-// 	}
+type RoleAssignmentApproval struct {
+	ID    string                      `json:"id"`
+	Steps RoleAssignmentApprovalSteps `json:"steps"`
+}
 
-// 	stage := value.Stages[0]
-// 	if stage.ReviewResult != "NotReviewed" {
-// 		return fmt.Errorf("expected review result to be NotReviewed, got %q", stage.ReviewResult)
-// 	}
+func (c *Client) PIMEntraRoleAssignmentApprovalByApprovalID(ctx context.Context, approvalID string, justification string, reviewResult ReviewResult) error {
+	roleAssignmentApprovalsResponse, err := c.betaClient.RoleManagement().Directory().RoleAssignmentApprovals().ByApprovalId(approvalID).Get(ctx, &rolemanagementbeta.DirectoryRoleAssignmentApprovalsApprovalItemRequestBuilderGetRequestConfiguration{})
+	if err != nil {
+		return fmt.Errorf("failed to get assignment approvals: %w", err)
+	}
 
-// 	if stage.Status != "InProgress" {
-// 		return fmt.Errorf("expected status to be InProgress, got %q", stage.Status)
-// 	}
+	value := RoleAssignmentApproval{}
+	err = unmarshalGraphValue(roleAssignmentApprovalsResponse, &value)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal graph value: %w", err)
+	}
 
-// 	if !stage.AssignedToMe {
-// 		return fmt.Errorf("expected assignedToMe to be true, got %v", stage.AssignedToMe)
-// 	}
+	if len(value.Steps) != 1 {
+		return fmt.Errorf("expected 1 approval step, got %d", len(value.Steps))
+	}
 
-// 	if stage.ID == "" {
-// 		return fmt.Errorf("expected ID to be non-empty")
-// 	}
+	step := value.Steps[0]
+	if step.ReviewResult != "NotReviewed" {
+		return fmt.Errorf("expected review result to be NotReviewed, got %q", step.ReviewResult)
+	}
 
-// 	approvalStageID := stage.ID
+	if step.Status != "InProgress" {
+		return fmt.Errorf("expected status to be InProgress, got %q", step.Status)
+	}
 
-// 	requestBody := graphmodels.NewApprovalStage()
-// 	requestBody.SetReviewResult(to.Ptr(reviewResult.String()))
-// 	requestBody.SetJustification(&justification)
+	if !step.AssignedToMe {
+		return fmt.Errorf("expected assignedToMe to be true, got %v", step.AssignedToMe)
+	}
 
-// 	_, err = c.client.IdentityGovernance().PrivilegedAccess().Group().AssignmentApprovals().ByApprovalId(approvalID).Stages().ByApprovalStageId(approvalStageID).Patch(ctx, requestBody, &identitygovernance.PrivilegedAccessGroupAssignmentApprovalsItemStagesApprovalStageItemRequestBuilderPatchRequestConfiguration{})
-// 	if err != nil {
-// 		return fmt.Errorf("failed to patch assignment approval stage: %w", err)
-// 	}
+	if step.ID == "" {
+		return fmt.Errorf("expected ID to be non-empty")
+	}
 
-// 	return nil
-// }
+	approvalStepID := step.ID
+	requestBody := graphmodelsbeta.NewApprovalStep()
+	requestBody.SetReviewResult(to.Ptr(reviewResult.String()))
+	requestBody.SetJustification(&justification)
+
+	_, err = c.betaClient.RoleManagement().Directory().RoleAssignmentApprovals().ByApprovalId(approvalID).Steps().ByApprovalStepId(approvalStepID).Patch(ctx, requestBody, &rolemanagementbeta.DirectoryRoleAssignmentApprovalsItemStepsApprovalStepItemRequestBuilderPatchRequestConfiguration{})
+	if err != nil {
+		return fmt.Errorf("failed to patch assignment approval stage: %w", err)
+	}
+
+	return nil
+}

@@ -27,6 +27,7 @@ locals {
     "RoleEligibilitySchedule.Read.Directory",
     "RoleAssignmentSchedule.ReadWrite.Directory",
     "RoleManagementPolicy.Read.Directory",
+    "PrivilegedAccess.ReadWrite.AzureAD",
   ]
 }
 
