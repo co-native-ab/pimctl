@@ -18,7 +18,7 @@ After looking into the different options out there, none of the ones we found ma
 
 ## Alpha Version
 
-This current version of pimctl is in a very early stage. We want to do more, test more, and make it stable. The subcommands, flags, and everything in between will most likely change a couple of times, but before we do too much, we want to see what other people need.
+This current version of pimctl is in a very early stage. We want to do more, test more, and make it stable. The subcommands, flags, and everything in between will most likely change a couple of times, but before we do too much, we want to see what other people need. You can as of now work with Groups and Entra Roles.
 
 As Moltke may have said, if he spoke English and wrote code:
 
@@ -73,7 +73,7 @@ sudo mv "${TEMP_DIR}/pimctl" /usr/local/bin/pimctl
 
 ### How do I use pimctl?
 
-We haven't documented much of it as of right now but will in the future when it's not in alpha. Once you have installed it and set up the Entra Application, first log in using the Azure CLI (not a requirement but makes it easier to discover the client ID and tenant ID) and then run `pimctl login`. After that, you can see the subcommands by running `pimctl`. The two primary commands right now are `pimctl group eligible menu` to request assignment and `pimctl group approval menu` to approve requests from other people.
+We haven't documented much of it as of right now but will in the future when it's not in alpha. Once you have installed it and set up the Entra Application, first log in using the Azure CLI (not a requirement but makes it easier to discover the client ID and tenant ID) and then run `pimctl login`. After that, you can see the subcommands by running `pimctl`. The primary commands right now are `pimctl [group|role entra] eligible menu` to request assignment and `pimctl [group|role entra] approval menu` to approve requests from other people.
 
 ### Where are the sessions/tokens cached locally?
 
@@ -101,11 +101,15 @@ If you want to set it up manually, the following is important:
 - Add redirect URI `http://localhost:45241`
 - Through the metadata, add the tag `pimctl`
 - Add the following (Delegated) Microsoft Graph scopes:
+  - `User.Read`
   - `Group.Read.All`
   - `PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup`
   - `PrivilegedEligibilitySchedule.Read.AzureADGroup`
   - `RoleManagementPolicy.Read.AzureADGroup`
-  - `User.Read`
+  - `RoleEligibilitySchedule.Read.Directory`
+  - `RoleAssignmentSchedule.ReadWrite.Directory`
+  - `RoleManagementPolicy.Read.Directory`
+  - `PrivilegedAccess.ReadWrite.AzureAD`
 - Grant admin approval to the scopes
 
 **NOTE**: The tag `pimctl` is used during `pimctl login` to auto-discover the application if the user running the command has access to read the application as well as logged on using the Azure CLI. If the user doesn't have read access or isn't logged on using the Azure CLI, please use `pimctl login --client-id [entra-application-id] --tenant-id [entra-tenant-id]`. After the first login, `--client-id` and `--tenant-id` won't be necessary until `pimctl account clear` is run, since it will try to use the cached authentication record (stored in `~/.IdentityService/pimctl_[profile].auth-record.json`).
