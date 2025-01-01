@@ -58,12 +58,12 @@ func eligibleEntraRolesMenu(ctx context.Context, opts *eligibleEntraRolesMenuOpt
 
 	entraRoleEligibleAssignments, err := graphClient.PIMEntraRoleEligibleAssignments(ctx)
 	if err != nil {
-		return fmt.Errorf("failed to get eligible groups: %w", err)
+		return fmt.Errorf("failed to get eligible Entra roles: %w", err)
 	}
 
-	selectedEntraRoles, quit, err := chooseGroups(entraRoleEligibleAssignments)
+	selectedEntraRoles, quit, err := chooseEntraRoles(entraRoleEligibleAssignments)
 	if err != nil {
-		return fmt.Errorf("failed to choose group: %w", err)
+		return fmt.Errorf("failed to choose Entra role: %w", err)
 	}
 
 	if quit {
@@ -94,7 +94,7 @@ func eligibleEntraRolesMenu(ctx context.Context, opts *eligibleEntraRolesMenuOpt
 	return nil
 }
 
-func chooseGroups(entraRoleEligibleAssignments graph.EntraRoleEligibleAssignments) (graph.EntraRoleEligibleAssignments, bool, error) {
+func chooseEntraRoles(entraRoleEligibleAssignments graph.EntraRoleEligibleAssignments) (graph.EntraRoleEligibleAssignments, bool, error) {
 	columns := []table.Column{
 		{Title: "Role", Width: tuihelper.LongestStringLength("roleDefinition.displayName", 10, entraRoleEligibleAssignments)},
 		{Title: "Scope", Width: 10},
@@ -110,7 +110,6 @@ func chooseGroups(entraRoleEligibleAssignments graph.EntraRoleEligibleAssignment
 			entraRoleEligibleAssignment.Scope(),
 			tuihelper.TitleCase(entraRoleEligibleAssignment.MemberType),
 			entraRoleEligibleAssignment.ScheduleInfo.EndTime(),
-			entraRoleEligibleAssignment.RoleDefinitionID,
 		})
 	}
 
