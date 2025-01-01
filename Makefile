@@ -49,3 +49,27 @@ build:
 	VERSION=$$(git describe --exact-match --tags --always --dirty)
 	DATE=$$(date '+%Y-%m-%d')
 	CGO_ENABLED=0 go build -ldflags "-s -w -X github.com/co-native-ab/pimctl/internal/build.Version=$${VERSION} -X github.com/co-native-ab/pimctl/internal/build.Date=$${DATE}" -o bin/pimctl ./
+
+.PHONY: update-msgraph-openapi-specifications
+.SILENT: update-msgraph-openapi-specifications
+update-msgraph-openapi-specifications:
+	curl --silent --fail -o ./msgraph/openapi/openapi_v1.0.yaml -L https://aka.ms/graph/v1.0/openapi.yaml
+	curl --silent --fail -o ./msgraph/openapi/openapi_beta.yaml -L https://aka.ms/graph/beta/openapi.yaml
+
+.PHONY: generate-msgraph-sdk
+.SILENT: generate-msgraph-sdk
+generate-msgraph-sdk:
+	kiota generate --clean-output --openapi msgraph/openapi/openapi_v1.0.yaml --language Go --class-name msgraphsdk --namespace-name github.com/co-native-ab/pimctl/internal/generated/msgraphsdk --output ./internal/generated/msgraphsdk \
+		--include-path /me \
+		--include-path /roleManagement/directory/roleEligibilitySchedules/* \
+		--include-path /roleManagement/directory/roleAssignmentScheduleInstances/* \
+		--include-path /roleManagement/directory/roleAssignmentScheduleRequests \
+		--include-path /roleManagement/directory/roleAssignmentScheduleRequests/* \
+		--include-path /policies/roleManagementPolicyAssignments \
+		--include-path /identityGovernance/privilegedAccess/group/eligibilitySchedules/* \
+		--include-path /identityGovernance/privilegedAccess/group/assignmentScheduleInstances/* \
+		--include-path /identityGovernance/privilegedAccess/group/assignmentScheduleRequests \
+		--include-path /identityGovernance/privilegedAccess/group/assignmentScheduleRequests/* \
+		--include-path /identityGovernance/privilegedAccess/group/assignmentApprovals/**
+	kiota generate --clean-output --openapi msgraph/openapi/openapi_beta.yaml --language Go --class-name msgraphbetasdk --namespace-name github.com/co-native-ab/pimctl/internal/generated/msgraphbetasdk --output ./internal/generated/msgraphbetasdk \
+		--include-path /roleManagement/directory/roleAssignmentApprovals/**

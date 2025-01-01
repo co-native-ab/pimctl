@@ -13,11 +13,14 @@ require (
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/cli/cli/v2 v2.63.2
 	github.com/cli/go-gh/v2 v2.11.1
+	github.com/google/uuid v1.6.0
 	github.com/lestrrat-go/jwx v1.2.30
 	github.com/microsoft/kiota-abstractions-go v1.8.1
+	github.com/microsoft/kiota-serialization-form-go v1.0.0
 	github.com/microsoft/kiota-serialization-json-go v1.0.9
-	github.com/microsoftgraph/msgraph-beta-sdk-go v0.116.0
-	github.com/microsoftgraph/msgraph-sdk-go v1.55.0
+	github.com/microsoft/kiota-serialization-multipart-go v1.0.0
+	github.com/microsoft/kiota-serialization-text-go v1.0.0
+	github.com/microsoftgraph/msgraph-sdk-go-core v1.2.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.19.0
@@ -50,7 +53,6 @@ require (
 	github.com/goccy/go-json v0.10.4 // indirect
 	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/google/shlex v0.0.0-20191202100458-e7afc7fbc510 // indirect
-	github.com/google/uuid v1.6.0 // indirect
 	github.com/gorilla/css v1.0.1 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
@@ -71,10 +73,6 @@ require (
 	github.com/microcosm-cc/bluemonday v1.0.27 // indirect
 	github.com/microsoft/kiota-authentication-azure-go v1.1.0 // indirect
 	github.com/microsoft/kiota-http-go v1.4.7 // indirect
-	github.com/microsoft/kiota-serialization-form-go v1.0.0 // indirect
-	github.com/microsoft/kiota-serialization-multipart-go v1.0.0 // indirect
-	github.com/microsoft/kiota-serialization-text-go v1.0.0 // indirect
-	github.com/microsoftgraph/msgraph-sdk-go-core v1.2.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect

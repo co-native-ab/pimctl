@@ -6,27 +6,34 @@ import (
 	"fmt"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
+	msgraphbetasdk "github.com/co-native-ab/pimctl/internal/generated/msgraphbetasdk"
+	msgraphsdk "github.com/co-native-ab/pimctl/internal/generated/msgraphsdk"
+	"github.com/co-native-ab/pimctl/internal/generated/msgraphsdk/me"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 	kiotajson "github.com/microsoft/kiota-serialization-json-go"
-	msgraphbetasdk "github.com/microsoftgraph/msgraph-beta-sdk-go"
-	msgraphsdk "github.com/microsoftgraph/msgraph-sdk-go"
-	"github.com/microsoftgraph/msgraph-sdk-go/users"
+	graphcore "github.com/microsoftgraph/msgraph-sdk-go-core"
+	graphcoreauth "github.com/microsoftgraph/msgraph-sdk-go-core/authentication"
 )
 
 type Client struct {
-	client     *msgraphsdk.GraphServiceClient
-	betaClient *msgraphbetasdk.GraphServiceClient
+	client     *msgraphsdk.Msgraphsdk
+	betaClient *msgraphbetasdk.Msgraphbetasdk
 }
 
 func NewClient(cred azcore.TokenCredential, scopes []string) (*Client, error) {
-	client, err := msgraphsdk.NewGraphServiceClientWithCredentials(cred, scopes)
+	authProvider, err := graphcoreauth.NewAzureIdentityAuthenticationProviderWithScopes(cred, scopes)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create GraphServiceClient: %w", err)
+		return nil, fmt.Errorf("failed to create AzureIdentityAuthenticationProvider: %w", err)
 	}
-	betaClient, err := msgraphbetasdk.NewGraphServiceClientWithCredentials(cred, scopes)
+
+	requestAdapter, err := graphcore.NewGraphRequestAdapterBase(authProvider, graphcore.GraphClientOptions{})
 	if err != nil {
-		return nil, fmt.Errorf("failed to create GraphBetaServiceClient: %w", err)
+		return nil, fmt.Errorf("failed to create GraphRequestAdapterBase: %w", err)
 	}
+
+	client := msgraphsdk.NewMsgraphsdk(requestAdapter)
+	betaClient := msgraphbetasdk.NewMsgraphbetasdk(requestAdapter)
+
 	return &Client{
 		client:     client,
 		betaClient: betaClient,
@@ -43,7 +50,7 @@ type User struct {
 }
 
 func (c *Client) Me(ctx context.Context) (User, error) {
-	res, err := c.client.Me().Get(ctx, &users.UserItemRequestBuilderGetRequestConfiguration{})
+	res, err := c.client.Me().Get(ctx, &me.MeRequestBuilderGetRequestConfiguration{})
 	if err != nil {
 		return User{}, fmt.Errorf("failed to get me: %w", err)
 	}
