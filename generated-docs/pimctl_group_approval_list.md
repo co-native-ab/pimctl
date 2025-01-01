@@ -1,10 +1,10 @@
 ## pimctl group approval list
 
-List request waiting for approval from current user
+List Azure PIM group request waiting for approval from current user
 
 ### Synopsis
 
-List request waiting for approval from current user
+List Azure PIM group request waiting for approval from current user
 
 ```
 pimctl group approval list [flags]

@@ -1,13 +1,13 @@
-## pimctl group request list
+## pimctl role entra approval list
 
-List all Entra group PIM requests current user can see
+List Entra role PIM requests waiting for approval from current user
 
 ### Synopsis
 
-List all Entra group PIM requests current user can see
+List Entra role PIM request waiting for approval from current user
 
 ```
-pimctl group request list [flags]
+pimctl role entra approval list [flags]
 ```
 
 ### Options
@@ -24,5 +24,5 @@ pimctl group request list [flags]
 
 ### SEE ALSO
 
-* [pimctl group request](pimctl_group_request.md)	 - Manage Azure PIM group assignment requests
+* [pimctl role entra approval](pimctl_role_entra_approval.md)	 - Manage Entra PIM role approvals
 

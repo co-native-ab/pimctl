@@ -18,4 +18,5 @@ A CLI tool to manage Azure Privileged Identity Management (PIM) roles and assign
 * [pimctl account](pimctl_account.md)	 - Manage pimctl account
 * [pimctl group](pimctl_group.md)	 - Manage Azure PIM groups
 * [pimctl login](pimctl_login.md)	 - Login to pimctl
+* [pimctl role](pimctl_role.md)	 - Manage PIM roles
 
