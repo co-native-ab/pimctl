@@ -16,11 +16,18 @@ data "azuread_service_principal" "ms_graph" {
 
 locals {
   required_scopes = [
+    # Required for both Entra Groups and Roles
+    "User.Read",
     "Group.Read.All",
+    # Required for Entra Groups
     "PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup",
     "PrivilegedEligibilitySchedule.Read.AzureADGroup",
     "RoleManagementPolicy.Read.AzureADGroup",
-    "User.Read",
+    # Required for Entra Roles
+    "RoleEligibilitySchedule.Read.Directory",
+    "RoleAssignmentSchedule.ReadWrite.Directory",
+    "RoleManagementPolicy.Read.Directory",
+    "PrivilegedAccess.ReadWrite.AzureAD",
   ]
 }
 
@@ -59,8 +66,18 @@ resource "azuread_service_principal" "this" {
   client_id = azuread_application.this.client_id
 }
 
+resource "null_resource" "required_scopes" {
+  triggers = {
+    required_scopes = join(",", local.required_scopes)
+  }
+}
+
 resource "azuread_service_principal_delegated_permission_grant" "this" {
   service_principal_object_id          = azuread_service_principal.this.object_id
   resource_service_principal_object_id = data.azuread_service_principal.ms_graph.object_id
   claim_values                         = local.required_scopes
+
+  lifecycle {
+    replace_triggered_by = [null_resource.required_scopes]
+  }
 }

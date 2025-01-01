@@ -22,6 +22,6 @@ Manage Azure PIM group approvals
 
 * [pimctl group](pimctl_group.md)	 - Manage Azure PIM groups
 * [pimctl group approval create](pimctl_group_approval_create.md)	 - Approve or Deny a pending group assignment request
-* [pimctl group approval list](pimctl_group_approval_list.md)	 - List request waiting for approval from current user
+* [pimctl group approval list](pimctl_group_approval_list.md)	 - List Azure PIM group request waiting for approval from current user
 * [pimctl group approval menu](pimctl_group_approval_menu.md)	 - Menu to manage group approvals others have requested
 

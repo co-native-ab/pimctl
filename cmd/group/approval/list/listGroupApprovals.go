@@ -15,8 +15,8 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "list",
-	Short: "List request waiting for approval from current user",
-	Long:  "List request waiting for approval from current user",
+	Short: "List Azure PIM group request waiting for approval from current user",
+	Long:  "List Azure PIM group request waiting for approval from current user",
 	RunE:  runListGroupApprovals,
 }
 

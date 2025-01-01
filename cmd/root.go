@@ -10,6 +10,7 @@ import (
 	"github.com/co-native-ab/pimctl/cmd/account"
 	"github.com/co-native-ab/pimctl/cmd/group"
 	"github.com/co-native-ab/pimctl/cmd/login"
+	"github.com/co-native-ab/pimctl/cmd/role"
 	"github.com/co-native-ab/pimctl/internal/build"
 	"github.com/co-native-ab/pimctl/internal/cmdhelper"
 
@@ -53,6 +54,7 @@ func init() {
 	viper.BindPFlag("PROFILE", RootCmd.PersistentFlags().Lookup("profile"))
 	RootCmd.AddCommand(account.Cmd)
 	RootCmd.AddCommand(group.Cmd)
+	RootCmd.AddCommand(role.Cmd)
 	RootCmd.AddCommand(login.Cmd)
 }
 

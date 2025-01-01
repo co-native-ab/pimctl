@@ -15,8 +15,8 @@ import (
 
 var Cmd = &cobra.Command{
 	Use:   "list",
-	Short: "List all request current user can see",
-	Long:  "List all request current user can see",
+	Short: "List all Entra group PIM requests current user can see",
+	Long:  "List all Entra group PIM requests current user can see",
 	RunE:  runListGroupRequests,
 }
 

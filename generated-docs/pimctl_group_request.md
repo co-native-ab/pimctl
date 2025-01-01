@@ -22,5 +22,5 @@ Manage Azure PIM group assignment requests
 
 * [pimctl group](pimctl_group.md)	 - Manage Azure PIM groups
 * [pimctl group request create](pimctl_group_request_create.md)	 - Create a new group assignment request
-* [pimctl group request list](pimctl_group_request_list.md)	 - List all request current user can see
+* [pimctl group request list](pimctl_group_request_list.md)	 - List all Entra group PIM requests current user can see
 

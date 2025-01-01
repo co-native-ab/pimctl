@@ -13,6 +13,7 @@ var (
 	identityServiceDirectoryName       = ".IdentityService"
 	cacheNamePrefix                    = "pimctl"
 	cacheFileNameSuffix                = "cache.json"
+	caeCacheFileNameSuffix             = "cae"
 	authenticationRecordFileNameSuffix = "auth-record.json"
 	configCacheFileNameSuffix          = "config-cache.json"
 )
@@ -31,6 +32,10 @@ func getConfigCacheFileName(profileName string) string {
 
 func getCacheFileName(profileName string) string {
 	return fmt.Sprintf("%s_%s.%s", cacheNamePrefix, profileName, cacheFileNameSuffix)
+}
+
+func getCaeCacheFileName(profileName string) string {
+	return fmt.Sprintf("%s_%s.%s", cacheNamePrefix, profileName, caeCacheFileNameSuffix)
 }
 
 func getUserHomeDir() (string, error) {
@@ -85,6 +90,12 @@ func ClearCache(profileName string) error {
 	err = os.Remove(cachePath)
 	if err != nil && !os.IsNotExist(err) {
 		return fmt.Errorf("failed to remove cache from %q: %w", cachePath, err)
+	}
+
+	caeCachePath := filepath.Join(userHomeDir, identityServiceDirectoryName, getCaeCacheFileName(profileName))
+	err = os.Remove(caeCachePath)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to remove cae cache from %q: %w", caeCachePath, err)
 	}
 
 	return nil

@@ -1,13 +1,13 @@
-## pimctl group request list
+## pimctl role entra active list
 
-List all Entra group PIM requests current user can see
+List active Entra roles you have access to
 
 ### Synopsis
 
-List all Entra group PIM requests current user can see
+List all the active Entra roles you have access to in PIM
 
 ```
-pimctl group request list [flags]
+pimctl role entra active list [flags]
 ```
 
 ### Options
@@ -24,5 +24,5 @@ pimctl group request list [flags]
 
 ### SEE ALSO
 
-* [pimctl group request](pimctl_group_request.md)	 - Manage Azure PIM group assignment requests
+* [pimctl role entra active](pimctl_role_entra_active.md)	 - Manage active Entra PIM roles
 
