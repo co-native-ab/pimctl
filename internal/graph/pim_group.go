@@ -6,10 +6,10 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	"github.com/co-native-ab/pimctl/internal/generated/msgraphsdk/identitygovernance"
+	graphmodels "github.com/co-native-ab/pimctl/internal/generated/msgraphsdk/models"
+	"github.com/co-native-ab/pimctl/internal/generated/msgraphsdk/policies"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
-	"github.com/microsoftgraph/msgraph-sdk-go/identitygovernance"
-	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
-	"github.com/microsoftgraph/msgraph-sdk-go/policies"
 )
 
 type ScheduleInfo struct {

@@ -1,12 +1,5 @@
 package graph
 
-import (
-	"context"
-	"fmt"
-
-	"github.com/microsoftgraph/msgraph-sdk-go/groups"
-)
-
 type Group struct {
 	ID              string   `json:"id"`
 	DisplayName     string   `json:"displayName"`
@@ -20,19 +13,4 @@ func (g Group) GroupType() string {
 		return "Security"
 	}
 	return "Microsoft 365"
-}
-
-func (c *Client) GroupGetByID(ctx context.Context, id string) (Group, error) {
-	res, err := c.client.Groups().ByGroupId(id).Get(ctx, &groups.GroupItemRequestBuilderGetRequestConfiguration{})
-	if err != nil {
-		return Group{}, fmt.Errorf("failed to get group by ID: %w", err)
-	}
-
-	group := Group{}
-	err = unmarshalGraphValue(res, &group)
-	if err != nil {
-		return Group{}, fmt.Errorf("failed to unmarshal graph value: %w", err)
-	}
-
-	return group, nil
 }

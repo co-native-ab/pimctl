@@ -6,12 +6,12 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
+	graphmodelsbeta "github.com/co-native-ab/pimctl/internal/generated/msgraphbetasdk/models"
+	rolemanagementbeta "github.com/co-native-ab/pimctl/internal/generated/msgraphbetasdk/rolemanagement"
+	graphmodels "github.com/co-native-ab/pimctl/internal/generated/msgraphsdk/models"
+	"github.com/co-native-ab/pimctl/internal/generated/msgraphsdk/policies"
+	"github.com/co-native-ab/pimctl/internal/generated/msgraphsdk/rolemanagement"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
-	graphmodelsbeta "github.com/microsoftgraph/msgraph-beta-sdk-go/models"
-	rolemanagementbeta "github.com/microsoftgraph/msgraph-beta-sdk-go/rolemanagement"
-	graphmodels "github.com/microsoftgraph/msgraph-sdk-go/models"
-	"github.com/microsoftgraph/msgraph-sdk-go/policies"
-	"github.com/microsoftgraph/msgraph-sdk-go/rolemanagement"
 )
 
 type RoleDefinition struct {

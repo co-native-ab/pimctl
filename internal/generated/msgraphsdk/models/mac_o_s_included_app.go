@@ -1,0 +1,139 @@
+package models
+
+import (
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+)
+
+// MacOSIncludedApp contains properties of an included .app in a MacOS app.
+type MacOSIncludedApp struct {
+    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+    additionalData map[string]any
+    // The bundleId of the app. This maps to the CFBundleIdentifier in the app's bundle configuration.
+    bundleId *string
+    // The version of the app. This maps to the CFBundleShortVersion in the app's bundle configuration.
+    bundleVersion *string
+    // The OdataType property
+    odataType *string
+}
+// NewMacOSIncludedApp instantiates a new MacOSIncludedApp and sets the default values.
+func NewMacOSIncludedApp()(*MacOSIncludedApp) {
+    m := &MacOSIncludedApp{
+    }
+    m.SetAdditionalData(make(map[string]any))
+    return m
+}
+// CreateMacOSIncludedAppFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
+// returns a Parsable when successful
+func CreateMacOSIncludedAppFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, error) {
+    return NewMacOSIncludedApp(), nil
+}
+// GetAdditionalData gets the AdditionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+// returns a map[string]any when successful
+func (m *MacOSIncludedApp) GetAdditionalData()(map[string]any) {
+    return m.additionalData
+}
+// GetBundleId gets the bundleId property value. The bundleId of the app. This maps to the CFBundleIdentifier in the app's bundle configuration.
+// returns a *string when successful
+func (m *MacOSIncludedApp) GetBundleId()(*string) {
+    return m.bundleId
+}
+// GetBundleVersion gets the bundleVersion property value. The version of the app. This maps to the CFBundleShortVersion in the app's bundle configuration.
+// returns a *string when successful
+func (m *MacOSIncludedApp) GetBundleVersion()(*string) {
+    return m.bundleVersion
+}
+// GetFieldDeserializers the deserialization information for the current model
+// returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
+func (m *MacOSIncludedApp) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
+    res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
+    res["bundleId"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBundleId(val)
+        }
+        return nil
+    }
+    res["bundleVersion"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetBundleVersion(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    return res
+}
+// GetOdataType gets the @odata.type property value. The OdataType property
+// returns a *string when successful
+func (m *MacOSIncludedApp) GetOdataType()(*string) {
+    return m.odataType
+}
+// Serialize serializes information the current object
+func (m *MacOSIncludedApp) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
+    {
+        err := writer.WriteStringValue("bundleId", m.GetBundleId())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteStringValue("bundleVersion", m.GetBundleVersion())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteStringValue("@odata.type", m.GetOdataType())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteAdditionalData(m.GetAdditionalData())
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+// SetAdditionalData sets the AdditionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+func (m *MacOSIncludedApp) SetAdditionalData(value map[string]any)() {
+    m.additionalData = value
+}
+// SetBundleId sets the bundleId property value. The bundleId of the app. This maps to the CFBundleIdentifier in the app's bundle configuration.
+func (m *MacOSIncludedApp) SetBundleId(value *string)() {
+    m.bundleId = value
+}
+// SetBundleVersion sets the bundleVersion property value. The version of the app. This maps to the CFBundleShortVersion in the app's bundle configuration.
+func (m *MacOSIncludedApp) SetBundleVersion(value *string)() {
+    m.bundleVersion = value
+}
+// SetOdataType sets the @odata.type property value. The OdataType property
+func (m *MacOSIncludedApp) SetOdataType(value *string)() {
+    m.odataType = value
+}
+type MacOSIncludedAppable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetBundleId()(*string)
+    GetBundleVersion()(*string)
+    GetOdataType()(*string)
+    SetBundleId(value *string)()
+    SetBundleVersion(value *string)()
+    SetOdataType(value *string)()
+}

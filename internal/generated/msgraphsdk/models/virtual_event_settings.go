@@ -1,0 +1,109 @@
+package models
+
+import (
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91 "github.com/microsoft/kiota-abstractions-go/serialization"
+)
+
+type VirtualEventSettings struct {
+    // Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+    additionalData map[string]any
+    // Indicates whether virtual event attendees receive email notifications.
+    isAttendeeEmailNotificationEnabled *bool
+    // The OdataType property
+    odataType *string
+}
+// NewVirtualEventSettings instantiates a new VirtualEventSettings and sets the default values.
+func NewVirtualEventSettings()(*VirtualEventSettings) {
+    m := &VirtualEventSettings{
+    }
+    m.SetAdditionalData(make(map[string]any))
+    return m
+}
+// CreateVirtualEventSettingsFromDiscriminatorValue creates a new instance of the appropriate class based on discriminator value
+// returns a Parsable when successful
+func CreateVirtualEventSettingsFromDiscriminatorValue(parseNode i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable, error) {
+    return NewVirtualEventSettings(), nil
+}
+// GetAdditionalData gets the AdditionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+// returns a map[string]any when successful
+func (m *VirtualEventSettings) GetAdditionalData()(map[string]any) {
+    return m.additionalData
+}
+// GetFieldDeserializers the deserialization information for the current model
+// returns a map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error) when successful
+func (m *VirtualEventSettings) GetFieldDeserializers()(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error)) {
+    res := make(map[string]func(i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode)(error))
+    res["isAttendeeEmailNotificationEnabled"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetBoolValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetIsAttendeeEmailNotificationEnabled(val)
+        }
+        return nil
+    }
+    res["@odata.type"] = func (n i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.ParseNode) error {
+        val, err := n.GetStringValue()
+        if err != nil {
+            return err
+        }
+        if val != nil {
+            m.SetOdataType(val)
+        }
+        return nil
+    }
+    return res
+}
+// GetIsAttendeeEmailNotificationEnabled gets the isAttendeeEmailNotificationEnabled property value. Indicates whether virtual event attendees receive email notifications.
+// returns a *bool when successful
+func (m *VirtualEventSettings) GetIsAttendeeEmailNotificationEnabled()(*bool) {
+    return m.isAttendeeEmailNotificationEnabled
+}
+// GetOdataType gets the @odata.type property value. The OdataType property
+// returns a *string when successful
+func (m *VirtualEventSettings) GetOdataType()(*string) {
+    return m.odataType
+}
+// Serialize serializes information the current object
+func (m *VirtualEventSettings) Serialize(writer i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.SerializationWriter)(error) {
+    {
+        err := writer.WriteBoolValue("isAttendeeEmailNotificationEnabled", m.GetIsAttendeeEmailNotificationEnabled())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteStringValue("@odata.type", m.GetOdataType())
+        if err != nil {
+            return err
+        }
+    }
+    {
+        err := writer.WriteAdditionalData(m.GetAdditionalData())
+        if err != nil {
+            return err
+        }
+    }
+    return nil
+}
+// SetAdditionalData sets the AdditionalData property value. Stores additional data not described in the OpenAPI description found when deserializing. Can be used for serialization as well.
+func (m *VirtualEventSettings) SetAdditionalData(value map[string]any)() {
+    m.additionalData = value
+}
+// SetIsAttendeeEmailNotificationEnabled sets the isAttendeeEmailNotificationEnabled property value. Indicates whether virtual event attendees receive email notifications.
+func (m *VirtualEventSettings) SetIsAttendeeEmailNotificationEnabled(value *bool)() {
+    m.isAttendeeEmailNotificationEnabled = value
+}
+// SetOdataType sets the @odata.type property value. The OdataType property
+func (m *VirtualEventSettings) SetOdataType(value *string)() {
+    m.odataType = value
+}
+type VirtualEventSettingsable interface {
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.AdditionalDataHolder
+    i878a80d2330e89d26896388a3f487eef27b0a0e6c010c493bf80be1452208f91.Parsable
+    GetIsAttendeeEmailNotificationEnabled()(*bool)
+    GetOdataType()(*string)
+    SetIsAttendeeEmailNotificationEnabled(value *bool)()
+    SetOdataType(value *string)()
+}
