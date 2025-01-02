@@ -38,7 +38,6 @@ func (c *uncachedCredential) Authenticate(ctx context.Context, opts *policy.Toke
 
 	configCache := configCache{
 		credentialMethod:       c.credentialMethod,
-		scopes:                 c.scopes,
 		azAuthenticationRecord: record,
 	}
 

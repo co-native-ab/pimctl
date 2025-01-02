@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
@@ -13,6 +14,7 @@ import (
 	"github.com/co-native-ab/pimctl/cmd/role"
 	"github.com/co-native-ab/pimctl/internal/build"
 	"github.com/co-native-ab/pimctl/internal/cmdhelper"
+	"github.com/co-native-ab/pimctl/internal/credentials"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -26,13 +28,23 @@ var RootCmd = &cobra.Command{
 	DisableAutoGenTag: true,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		command := getCommand(cmd.CommandPath())
-		switch command {
-		case "login", "account clear", "account show":
+		switch {
+		case slices.Contains([]string{"login", "account clear", "account show", "account token"}, command):
 			return nil
-		}
-
-		if !isLoggedIn(cmd.Context()) {
-			return fmt.Errorf("not logged in, run 'login' to continue")
+		case strings.HasPrefix(command, "group"):
+			if !isLoggedInMSGraph(cmd.Context()) {
+				return fmt.Errorf("not logged in, run 'login --scope MicrosoftGraph' to continue")
+			}
+		case strings.Contains(command, "role entra"):
+			if !isLoggedInMSGraph(cmd.Context()) {
+				return fmt.Errorf("not logged in, run 'login --scope MicrosoftGraph' to continue")
+			}
+		case strings.Contains(command, "role azure"):
+			if !isLoggedInARM(cmd.Context()) {
+				return fmt.Errorf("not logged in, run 'login --scope Azure' to continue")
+			}
+		default:
+			return fmt.Errorf("unknown command: %s", command)
 		}
 
 		return nil
@@ -66,15 +78,32 @@ func getCommand(input string) string {
 	return strings.Join(parts[1:], " ")
 }
 
-func isLoggedIn(ctx context.Context) bool {
-	cred, scopes, err := cmdhelper.NewCachedCredential()
+func isLoggedInMSGraph(ctx context.Context) bool {
+	cred, err := cmdhelper.NewCachedCredential()
 	if err != nil {
 		return false
 	}
 
+	scope := credentials.MicrosoftGraphPimctlScope
 	_, err = cred.GetToken(ctx, policy.TokenRequestOptions{
 		EnableCAE: true,
-		Scopes:    scopes,
+		Scopes:    scope.Scopes(),
 	})
+
+	return err == nil
+}
+
+func isLoggedInARM(ctx context.Context) bool {
+	cred, err := cmdhelper.NewCachedCredential()
+	if err != nil {
+		return false
+	}
+
+	scope := credentials.AzurePimctlScope
+	_, err = cred.GetToken(ctx, policy.TokenRequestOptions{
+		EnableCAE: true,
+		Scopes:    scope.Scopes(),
+	})
+
 	return err == nil
 }

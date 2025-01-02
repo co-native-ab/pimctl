@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/co-native-ab/pimctl/internal/azurerm"
 	"github.com/co-native-ab/pimctl/internal/cmdhelper"
 	"github.com/co-native-ab/pimctl/internal/credentials"
 	"github.com/co-native-ab/pimctl/internal/graph"
@@ -23,7 +24,9 @@ var Cmd = &cobra.Command{
 func init() {
 	Cmd.Flags().String("client-id", "", "Entra Application Client ID for pimctl")
 	Cmd.Flags().String("tenant-id", "", "Azure AD Tenant ID for the current user")
-	Cmd.Flags().StringSlice("scopes", []string{"https://graph.microsoft.com/.default"}, "OAuth2 scopes to request for pimctl")
+	pimctlScope := credentials.MicrosoftGraphPimctlScope
+	Cmd.Flags().Var(&pimctlScope, "scope", pimctlScope.HelpText())
+	Cmd.RegisterFlagCompletionFunc("scope", pimctlScope.CobraCompletion)
 	credentialMethod := credentials.InteractiveBrowserCredentialMethod
 	Cmd.Flags().Var(&credentialMethod, "credential-method", credentialMethod.HelpText())
 	Cmd.RegisterFlagCompletionFunc("credential-method", credentialMethod.CobraCompletion)
@@ -32,7 +35,7 @@ func init() {
 type loginOptions struct {
 	clientID         string
 	tenantID         string
-	scopes           []string
+	pimctlScope      credentials.PimctlScope
 	credentialMethod credentials.CredentialMethod
 }
 
@@ -47,9 +50,11 @@ func newLoginOptions(flags *pflag.FlagSet) (*loginOptions, error) {
 		return nil, fmt.Errorf("failed to get tenant-id: %w", err)
 	}
 
-	scopes, err := flags.GetStringSlice("scopes")
+	pimctlScopeString := flags.Lookup("scope").Value.String()
+	pimctlScope := credentials.UnknownPimctlScope
+	err = pimctlScope.Set(pimctlScopeString)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get scopes: %w", err)
+		return nil, fmt.Errorf("failed to set scope: %w", err)
 	}
 
 	credentialMethodString := flags.Lookup("credential-method").Value.String()
@@ -62,7 +67,7 @@ func newLoginOptions(flags *pflag.FlagSet) (*loginOptions, error) {
 	return &loginOptions{
 		clientID:         clientID,
 		tenantID:         tenantID,
-		scopes:           scopes,
+		pimctlScope:      pimctlScope,
 		credentialMethod: credentialMethod,
 	}, nil
 }
@@ -87,13 +92,13 @@ func login(ctx context.Context, opts *loginOptions) error {
 		return fmt.Errorf("failed to get tenant ID: %w", err)
 	}
 
-	cred, err := cmdhelper.NewUncachedCredential(opts.credentialMethod, tenantID, clientID, opts.scopes)
+	cred, err := cmdhelper.NewUncachedCredential(opts.credentialMethod, tenantID, clientID, opts.pimctlScope.Scopes())
 	if err != nil {
 		return fmt.Errorf("failed to create cached credential: %w", err)
 	}
 
 	_, err = cred.Authenticate(ctx, &policy.TokenRequestOptions{
-		Scopes:    opts.scopes,
+		Scopes:    opts.pimctlScope.Scopes(),
 		EnableCAE: true,
 		TenantID:  tenantID,
 	})
@@ -101,17 +106,34 @@ func login(ctx context.Context, opts *loginOptions) error {
 		return fmt.Errorf("failed to authenticate: %w", err)
 	}
 
-	graphClient, err := graph.NewClient(cred, opts.scopes)
-	if err != nil {
-		return fmt.Errorf("failed to create pim client: %w", err)
-	}
+	switch opts.pimctlScope {
+	case credentials.MicrosoftGraphPimctlScope:
+		graphClient, err := graph.NewClient(cred, opts.pimctlScope.Scopes())
+		if err != nil {
+			return fmt.Errorf("failed to create pim client: %w", err)
+		}
 
-	me, err := graphClient.Me(context.Background())
-	if err != nil {
-		return fmt.Errorf("failed to get me: %w", err)
-	}
+		me, err := graphClient.Me(ctx)
+		if err != nil {
+			return fmt.Errorf("failed to get me: %w", err)
+		}
 
-	fmt.Printf("Successfully logged in as: %s\n", me.UserPrincipalName)
+		fmt.Printf("Successfully logged in to Microsoft Graph as: %s\n", me.UserPrincipalName)
+	case credentials.AzurePimctlScope:
+		azurermClient, err := azurerm.NewClient(cred)
+		if err != nil {
+			return fmt.Errorf("failed to create azurerm client: %w", err)
+		}
+
+		upn, err := azurermClient.Me(ctx, opts.pimctlScope.Scopes(), tenantID)
+		if err != nil {
+			return fmt.Errorf("failed to get me: %w", err)
+		}
+
+		fmt.Printf("Successfully logged in to Azure Resource Manager as: %s\n", upn)
+	default:
+		return fmt.Errorf("unsupported scope: %s", opts.pimctlScope.String())
+	}
 
 	return nil
 }

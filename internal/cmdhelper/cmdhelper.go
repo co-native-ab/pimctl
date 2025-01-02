@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/co-native-ab/pimctl/internal/azurerm"
 	"github.com/co-native-ab/pimctl/internal/credentials"
 	"github.com/co-native-ab/pimctl/internal/graph"
 	"github.com/spf13/viper"
@@ -16,7 +17,7 @@ func NewUncachedCredential(credentialMethod credentials.CredentialMethod, tenant
 	return credentials.NewUncached(credentialMethod, tenantID, clientID, scopes, profileName)
 }
 
-func NewCachedCredential() (*credentials.Credential, []string, error) {
+func NewCachedCredential() (*credentials.Credential, error) {
 	profileName := viper.GetString("profile")
 	return credentials.NewCached(profileName)
 }
@@ -27,18 +28,32 @@ func ClearCachedCredential() error {
 }
 
 func NewGraphClientWithCachedCredential() (*graph.Client, error) {
-	profileName := viper.GetString("profile")
-	cred, scopes, err := credentials.NewCached(profileName)
+	cred, err := NewCachedCredential()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cached credential: %w", err)
 	}
 
-	graphClient, err := graph.NewClient(cred, scopes)
+	scope := credentials.MicrosoftGraphPimctlScope
+	graphClient, err := graph.NewClient(cred, scope.Scopes())
 	if err != nil {
 		return nil, fmt.Errorf("failed to create graph client: %w", err)
 	}
 
 	return graphClient, nil
+}
+
+func NewAzurermClientWithCachedCredential() (*azurerm.Client, error) {
+	cred, err := NewCachedCredential()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cached credential: %w", err)
+	}
+
+	azurermClient, err := azurerm.NewClient(cred)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create azurerm client: %w", err)
+	}
+
+	return azurermClient, nil
 }
 
 func GetCachedCredentialAuthenticationRecord() (azidentity.AuthenticationRecord, error) {

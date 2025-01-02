@@ -103,12 +103,10 @@ func ClearCache(profileName string) error {
 
 type configCacheFile struct {
 	CredentialMethod CredentialMethod `json:"credential_method"`
-	Scopes           []string         `json:"scopes"`
 }
 
 type configCache struct {
 	credentialMethod       CredentialMethod
-	scopes                 []string
 	azAuthenticationRecord azidentity.AuthenticationRecord
 }
 
@@ -121,7 +119,6 @@ func (c *configCache) Store(profileName string) error {
 	configCachePath := filepath.Join(userHomeDir, identityServiceDirectoryName, getConfigCacheFileName(profileName))
 	err = storeCachedFile(configCachePath, configCacheFile{
 		CredentialMethod: c.credentialMethod,
-		Scopes:           c.scopes,
 	})
 	if err != nil {
 		return fmt.Errorf("failed to store config cache: %w", err)
@@ -156,7 +153,6 @@ func getCacheConfig(profileName string) (*configCache, error) {
 
 	return &configCache{
 		credentialMethod:       configCacheFile.CredentialMethod,
-		scopes:                 configCacheFile.Scopes,
 		azAuthenticationRecord: authenticationRecord,
 	}, nil
 }

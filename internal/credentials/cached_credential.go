@@ -22,25 +22,25 @@ func (c *cachedCredential) Authenticate(ctx context.Context, opts *policy.TokenR
 	return c.cred.Authenticate(ctx, opts)
 }
 
-func newCachedCredential(profileName string) (*cachedCredential, []string, error) {
+func newCachedCredential(profileName string) (*cachedCredential, error) {
 	credCache, err := cache.New(&cache.Options{
 		Name: getCacheName(profileName),
 	})
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create cache: %w", err)
+		return nil, fmt.Errorf("failed to create cache: %w", err)
 	}
 
 	configCache, err := getCacheConfig(profileName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to get cache config: %w", err)
+		return nil, fmt.Errorf("failed to get cache config: %w", err)
 	}
 
 	cred, err := newCachedAzureCredential(configCache.credentialMethod, configCache.azAuthenticationRecord.ClientID, configCache.azAuthenticationRecord.TenantID, credCache, configCache.azAuthenticationRecord)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create azure credential: %w", err)
+		return nil, fmt.Errorf("failed to create azure credential: %w", err)
 	}
 
 	return &cachedCredential{
 		cred: cred,
-	}, configCache.scopes, nil
+	}, nil
 }

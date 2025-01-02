@@ -7,6 +7,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/co-native-ab/pimctl/internal/cmdhelper"
+	"github.com/co-native-ab/pimctl/internal/credentials"
 	"github.com/lestrrat-go/jwx/jwt"
 
 	"github.com/spf13/cobra"
@@ -21,6 +22,9 @@ var Cmd = &cobra.Command{
 
 func init() {
 	Cmd.Flags().String("output", "json", "output format. can be 'json' or 'raw'")
+	pimctlScope := credentials.MicrosoftGraphPimctlScope
+	Cmd.Flags().Var(&pimctlScope, "scope", pimctlScope.HelpText())
+	Cmd.RegisterFlagCompletionFunc("scope", pimctlScope.CobraCompletion)
 }
 
 func runToken(cmd *cobra.Command, _ []string) error {
@@ -29,11 +33,18 @@ func runToken(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to get output: %w", err)
 	}
 
-	return getToken(cmd.Context(), outputFormat)
+	pimctlScopeString := cmd.Flags().Lookup("scope").Value.String()
+	pimctlScope := credentials.UnknownPimctlScope
+	err = pimctlScope.Set(pimctlScopeString)
+	if err != nil {
+		return fmt.Errorf("failed to set scope: %w", err)
+	}
+
+	return getToken(cmd.Context(), outputFormat, pimctlScope)
 }
 
-func getToken(ctx context.Context, outputFormat string) error {
-	cred, scopes, err := cmdhelper.NewCachedCredential()
+func getToken(ctx context.Context, outputFormat string, pimctlScope credentials.PimctlScope) error {
+	cred, err := cmdhelper.NewCachedCredential()
 	if err != nil {
 		return fmt.Errorf("failed to get token: %w", err)
 	}
@@ -44,7 +55,7 @@ func getToken(ctx context.Context, outputFormat string) error {
 	}
 
 	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes:    scopes,
+		Scopes:    pimctlScope.Scopes(),
 		EnableCAE: true,
 		TenantID:  cachedAuthenticationRecord.TenantID,
 	})
