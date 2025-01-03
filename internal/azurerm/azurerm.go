@@ -7,10 +7,8 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
-	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
-	"github.com/lestrrat-go/jwx/jwt"
 )
 
 func prettyPrintValue[T any](data T) {
@@ -36,31 +34,6 @@ func NewClient(cred azcore.TokenCredential) (*Client, error) {
 		clientFactory: clientFactory,
 		cred:          cred,
 	}, nil
-}
-
-func (c *Client) Me(ctx context.Context, scopes []string, tenantID string) (string, error) {
-	token, err := c.cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes:    scopes,
-		EnableCAE: true,
-		TenantID:  tenantID,
-	})
-
-	parsedToken, err := jwt.ParseString(token.Token)
-	if err != nil {
-		return "", fmt.Errorf("failed to parse token: %w", err)
-	}
-
-	upnRaw, ok := parsedToken.Get("upn")
-	if !ok {
-		return "", fmt.Errorf("failed to get upn from token")
-	}
-
-	upn, ok := upnRaw.(string)
-	if !ok {
-		return "", fmt.Errorf("failed to cast upn to string")
-	}
-
-	return upn, nil
 }
 
 func (c *Client) PIMAzureRoleEligibleAssignments(ctx context.Context) error {
