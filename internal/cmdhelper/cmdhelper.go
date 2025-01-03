@@ -33,8 +33,7 @@ func NewGraphClientWithCachedCredential() (*graph.Client, error) {
 		return nil, fmt.Errorf("failed to create cached credential: %w", err)
 	}
 
-	scope := credentials.MicrosoftGraphPimctlScope
-	graphClient, err := graph.NewClient(cred, scope.Scopes())
+	graphClient, err := graph.NewClient(cred, []string{credentials.MicrosoftGraphScope})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create graph client: %w", err)
 	}

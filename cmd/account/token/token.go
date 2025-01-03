@@ -22,9 +22,7 @@ var Cmd = &cobra.Command{
 
 func init() {
 	Cmd.Flags().String("output", "json", "output format. can be 'json' or 'raw'")
-	pimctlScope := credentials.MicrosoftGraphPimctlScope
-	Cmd.Flags().Var(&pimctlScope, "scope", pimctlScope.HelpText())
-	Cmd.RegisterFlagCompletionFunc("scope", pimctlScope.CobraCompletion)
+	Cmd.Flags().Bool("arm", false, "get token for Azure Resource Manager instead of Microsoft Graph")
 }
 
 func runToken(cmd *cobra.Command, _ []string) error {
@@ -33,17 +31,15 @@ func runToken(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("failed to get output: %w", err)
 	}
 
-	pimctlScopeString := cmd.Flags().Lookup("scope").Value.String()
-	pimctlScope := credentials.UnknownPimctlScope
-	err = pimctlScope.Set(pimctlScopeString)
+	useArmScope, err := cmd.Flags().GetBool("arm")
 	if err != nil {
-		return fmt.Errorf("failed to set scope: %w", err)
+		return fmt.Errorf("failed to get arm flag: %w", err)
 	}
 
-	return getToken(cmd.Context(), outputFormat, pimctlScope)
+	return getToken(cmd.Context(), outputFormat, useArmScope)
 }
 
-func getToken(ctx context.Context, outputFormat string, pimctlScope credentials.PimctlScope) error {
+func getToken(ctx context.Context, outputFormat string, useArmScope bool) error {
 	cred, err := cmdhelper.NewCachedCredential()
 	if err != nil {
 		return fmt.Errorf("failed to get token: %w", err)
@@ -54,8 +50,13 @@ func getToken(ctx context.Context, outputFormat string, pimctlScope credentials.
 		return fmt.Errorf("failed to get cached authentication record: %w", err)
 	}
 
+	scope := credentials.MicrosoftGraphScope
+	if useArmScope {
+		scope = credentials.AzureResourceManagerScope
+	}
+
 	token, err := cred.GetToken(ctx, policy.TokenRequestOptions{
-		Scopes:    pimctlScope.Scopes(),
+		Scopes:    []string{scope},
 		EnableCAE: true,
 		TenantID:  cachedAuthenticationRecord.TenantID,
 	})

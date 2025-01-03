@@ -20,6 +20,8 @@ data "azuread_service_principal" "arm" {
 
 locals {
   required_msgraph_scopes = [
+    # Required for token exchange to ARM
+    "offline_access",
     # Required for both Entra Groups and Roles
     "User.Read",
     "Group.Read.All",

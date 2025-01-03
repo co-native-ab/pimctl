@@ -33,15 +33,15 @@ var RootCmd = &cobra.Command{
 			return nil
 		case strings.HasPrefix(command, "group"):
 			if !isLoggedInMSGraph(cmd.Context()) {
-				return fmt.Errorf("not logged in, run 'login --scope MicrosoftGraph' to continue")
+				return fmt.Errorf("not logged in, run 'login' to continue")
 			}
 		case strings.Contains(command, "role entra"):
 			if !isLoggedInMSGraph(cmd.Context()) {
-				return fmt.Errorf("not logged in, run 'login --scope MicrosoftGraph' to continue")
+				return fmt.Errorf("not logged in, run 'login' to continue")
 			}
 		case strings.Contains(command, "role azure"):
 			if !isLoggedInARM(cmd.Context()) {
-				return fmt.Errorf("not logged in, run 'login --scope Azure' to continue")
+				return fmt.Errorf("not logged in, run 'login' to continue")
 			}
 		default:
 			return fmt.Errorf("unknown command: %s", command)
@@ -84,10 +84,9 @@ func isLoggedInMSGraph(ctx context.Context) bool {
 		return false
 	}
 
-	scope := credentials.MicrosoftGraphPimctlScope
 	_, err = cred.GetToken(ctx, policy.TokenRequestOptions{
 		EnableCAE: true,
-		Scopes:    scope.Scopes(),
+		Scopes:    []string{credentials.MicrosoftGraphScope},
 	})
 
 	return err == nil
@@ -99,10 +98,9 @@ func isLoggedInARM(ctx context.Context) bool {
 		return false
 	}
 
-	scope := credentials.AzurePimctlScope
 	_, err = cred.GetToken(ctx, policy.TokenRequestOptions{
 		EnableCAE: true,
-		Scopes:    scope.Scopes(),
+		Scopes:    []string{credentials.AzureResourceManagerScope},
 	})
 
 	return err == nil
