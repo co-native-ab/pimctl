@@ -53,43 +53,6 @@ func getClientIDFromAzureCLI(ctx context.Context) (string, error) {
 	return clientIDs[0], nil
 }
 
-func discoverTenantID(ctx context.Context, flagTenantID string) (string, error) {
-	errs := []error{}
-	if flagTenantID != "" {
-		return flagTenantID, nil
-	}
-	errs = append(errs, fmt.Errorf("no tenant ID provided through --tenant-id"))
-
-	credentialsCache, err := cmdhelper.GetCachedCredentialAuthenticationRecord()
-	if err == nil {
-		return credentialsCache.TenantID, nil
-	}
-	errs = append(errs, err)
-
-	azureCLITenantID, err := getTenantIDFromAzureCLI(ctx)
-	if err == nil {
-		return azureCLITenantID, nil
-	}
-	errs = append(errs, err)
-
-	return "", fmt.Errorf("unable to discover Tenant ID\nerrors: %w", errors.Join(errs...))
-}
-
-func getTenantIDFromAzureCLI(ctx context.Context) (string, error) {
-	stdout, err := execAzureCLI(ctx, []string{"account", "show", "--query", `tenantId`, "--output", "json"})
-	if err != nil {
-		return "", fmt.Errorf("failed to get tenant ID from Azure CLI: %w", err)
-	}
-
-	var tenantID string
-	err = json.Unmarshal(stdout, &tenantID)
-	if err != nil {
-		return "", fmt.Errorf("failed to unmarshal tenant ID: %w", err)
-	}
-
-	return tenantID, nil
-}
-
 func execAzureCLI(ctx context.Context, args []string) ([]byte, error) {
 	var stdout, stderr bytes.Buffer
 	cmd := exec.CommandContext(ctx, "az", args...)

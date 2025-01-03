@@ -34,10 +34,10 @@ func NewUncached(credentialMethod CredentialMethod, tenantID string, clientID st
 	return &Credential{cred: cred}, nil
 }
 
-func NewCached(profileName string) (*Credential, []string, error) {
-	cred, scopes, err := newCachedCredential(profileName)
+func NewCached(profileName string) (*Credential, error) {
+	cred, err := newCachedCredential(profileName)
 	if err != nil {
-		return nil, nil, fmt.Errorf("failed to create cached credential: %w", err)
+		return nil, fmt.Errorf("failed to create cached credential: %w", err)
 	}
-	return &Credential{cred: cred}, scopes, nil
+	return &Credential{cred: cred}, nil
 }
