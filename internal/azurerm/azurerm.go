@@ -117,24 +117,6 @@ func (c *Client) PIMAzureRoleEligibleAssignments(ctx context.Context) (AzureRole
 
 type AzureRoleAssignmentRequest armauthorization.RoleAssignmentScheduleRequest
 
-// Role
-// Resource
-// Request type
-// Reason
-// Condition
-// Request time
-// Start time
-// Request status
-
-// Owner
-// M365x96494877
-// Member add
-// asd
-// None
-// 1/4/2025, 3:21:37 PM
-// 1/4/2025, 3:21:36 PM
-// Pending approval​
-
 func (a *AzureRoleAssignmentRequest) Role() string {
 	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.RoleDefinition == nil || a.Properties.ExpandedProperties.RoleDefinition.DisplayName == nil {
 		return "UNKNOWN"
@@ -286,4 +268,109 @@ func (c *Client) pimAzureRoleAssignmentRequests(ctx context.Context, filter Azur
 	}
 
 	return azureRoleAssignmentRequests, nil
+}
+
+type AzureRoleActiveAssignment armauthorization.RoleAssignmentScheduleInstance
+
+func (a *AzureRoleActiveAssignment) Role() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.RoleDefinition == nil || a.Properties.ExpandedProperties.RoleDefinition.DisplayName == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.ExpandedProperties.RoleDefinition.DisplayName
+}
+
+func (a *AzureRoleActiveAssignment) Resource() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.DisplayName == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.ExpandedProperties.Scope.DisplayName
+}
+
+func (a *AzureRoleActiveAssignment) ResourceType() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.Type == nil {
+		return "UNKNOWN"
+	}
+
+	switch *a.Properties.ExpandedProperties.Scope.Type {
+	case "managementgroup":
+		return "Management group"
+	}
+
+	return *a.Properties.ExpandedProperties.Scope.Type
+}
+
+func (a *AzureRoleActiveAssignment) Membership() string {
+	if a.Properties == nil || a.Properties.MemberType == nil {
+		return "UNKNOWN"
+	}
+	return string(*a.Properties.MemberType)
+}
+
+func (a *AzureRoleActiveAssignment) Condition() string {
+	if a.Properties == nil || a.Properties.Condition == nil {
+		return "None"
+	}
+	return *a.Properties.Condition
+}
+
+func (a *AzureRoleActiveAssignment) State() string {
+	if a.Properties == nil || a.Properties.Status == nil {
+		return "UNKNOWN"
+	}
+	return string(*a.Properties.Status)
+}
+
+func (a *AzureRoleActiveAssignment) EndTime() string {
+	if a.Properties == nil || a.Properties.EndDateTime == nil {
+		return "UNKNOWN"
+	}
+	return a.Properties.EndDateTime.Local().Format(time.RFC3339)
+}
+
+type AzureRoleActiveAssignments []AzureRoleActiveAssignment
+
+func (c *Client) PIMAzureRoleActiveAssignments(ctx context.Context) (AzureRoleActiveAssignments, error) {
+	// NOTE: Listing an empty scope roleAssignmentScheduleInstancesClient.NewListForScopePager("", &armauthorization.RoleAssignmentScheduleInstancesClientListForScopeOptions{})
+	//       doesn't work and returns an empty list. So, we need to list for a specific scopes for now. It seems to be the same behavior in the portal.
+	roleEligibleAssignments, err := c.PIMAzureRoleEligibleAssignments(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get eligible assignments: %w", err)
+	}
+
+	scopes := map[string]struct{}{}
+	for _, v := range roleEligibleAssignments {
+		if v.Properties == nil || v.Properties.ExpandedProperties == nil || v.Properties.ExpandedProperties.Scope == nil || v.Properties.ExpandedProperties.Scope.ID == nil {
+			return nil, fmt.Errorf("scope for role eligibible assignment is nil")
+		}
+		scopes[*v.Properties.ExpandedProperties.Scope.ID] = struct{}{}
+	}
+
+	if len(scopes) == 0 {
+		return nil, nil
+	}
+
+	roleAssignmentScheduleInstancesClient := c.clientFactory.NewRoleAssignmentScheduleInstancesClient()
+
+	azureRoleActiveAssignments := AzureRoleActiveAssignments{}
+	for scope := range scopes {
+		pager := roleAssignmentScheduleInstancesClient.NewListForScopePager(scope, &armauthorization.RoleAssignmentScheduleInstancesClientListForScopeOptions{
+			Filter: to.Ptr("asTarget()"),
+		})
+
+		for pager.More() {
+			page, err := pager.NextPage(ctx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get next page: %w", err)
+			}
+			for _, v := range page.Value {
+				if v == nil {
+					return nil, fmt.Errorf("role assignment is nil")
+				}
+
+				azureRoleActiveAssignments = append(azureRoleActiveAssignments, AzureRoleActiveAssignment(*v))
+			}
+		}
+	}
+
+	return azureRoleActiveAssignments, nil
 }
