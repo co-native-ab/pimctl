@@ -2,6 +2,7 @@ package azure
 
 import (
 	"github.com/co-native-ab/pimctl/cmd/role/azure/eligible"
+	"github.com/co-native-ab/pimctl/cmd/role/azure/request"
 
 	"github.com/spf13/cobra"
 )
@@ -14,4 +15,5 @@ var Cmd = &cobra.Command{
 
 func init() {
 	Cmd.AddCommand(eligible.Cmd)
+	Cmd.AddCommand(request.Cmd)
 }
