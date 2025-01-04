@@ -54,6 +54,7 @@ func printActiveAzureRolesList(io *iostreams.IOStreams, azureRoleActiveAssignmen
 		"CONDITION",
 		"STATE",
 		"END TIME",
+		"SCOPE",
 	}
 
 	table := tableprinter.New(io, tableprinter.WithHeader(headers...))
@@ -65,6 +66,7 @@ func printActiveAzureRolesList(io *iostreams.IOStreams, azureRoleActiveAssignmen
 		table.AddField(azureRoleActiveAssignment.Condition())
 		table.AddField(azureRoleActiveAssignment.State())
 		table.AddField(azureRoleActiveAssignment.EndTime())
+		table.AddField(azureRoleActiveAssignment.Scope())
 		table.EndRow()
 	}
 

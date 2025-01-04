@@ -23,39 +23,42 @@ func prettyPrintValue[T any](data T) {
 }
 
 type Client struct {
-	clientFactory *armauthorization.ClientFactory
-	cred          azcore.TokenCredential
+	clientFactory    *armauthorization.ClientFactory
+	cred             azcore.TokenCredential
+	armClientOptions *arm.ClientOptions
 }
 
 func NewClient(cred azcore.TokenCredential) (*Client, error) {
-	clientFactory, err := armauthorization.NewClientFactory("", cred, &arm.ClientOptions{})
+	armClientOptions := &arm.ClientOptions{}
+	clientFactory, err := armauthorization.NewClientFactory("", cred, armClientOptions)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create client factory: %w", err)
 	}
 	return &Client{
-		clientFactory: clientFactory,
-		cred:          cred,
+		clientFactory:    clientFactory,
+		cred:             cred,
+		armClientOptions: armClientOptions,
 	}, nil
 }
 
 type AzureRoleEligibleAssignment armauthorization.RoleEligibilityScheduleInstance
 
 func (a *AzureRoleEligibleAssignment) Role() string {
-	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.RoleDefinition == nil {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.RoleDefinition == nil || a.Properties.ExpandedProperties.RoleDefinition.DisplayName == nil {
 		return "UNKNOWN"
 	}
 	return *a.Properties.ExpandedProperties.RoleDefinition.DisplayName
 }
 
 func (a *AzureRoleEligibleAssignment) Resource() string {
-	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.DisplayName == nil {
 		return "UNKNOWN"
 	}
 	return *a.Properties.ExpandedProperties.Scope.DisplayName
 }
 
 func (a *AzureRoleEligibleAssignment) ResourceType() string {
-	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.Type == nil {
 		return "UNKNOWN"
 	}
 
@@ -86,6 +89,20 @@ func (a *AzureRoleEligibleAssignment) EndTime() string {
 		return "Permanent"
 	}
 	return a.Properties.EndDateTime.Local().Format(time.RFC3339)
+}
+
+func (a *AzureRoleEligibleAssignment) RoleDefinitionID() string {
+	if a.Properties == nil || a.Properties.RoleDefinitionID == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.RoleDefinitionID
+}
+
+func (a *AzureRoleEligibleAssignment) Scope() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.ID == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.ExpandedProperties.Scope.ID
 }
 
 type AzureRoleEligibleAssignments []AzureRoleEligibleAssignment
@@ -228,6 +245,13 @@ func (a *AzureRoleAssignmentRequest) EndTime() string {
 	}
 }
 
+func (a *AzureRoleAssignmentRequest) Scope() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.ID == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.ExpandedProperties.Scope.ID
+}
+
 type AzureRoleAssignmentRequests []AzureRoleAssignmentRequest
 
 type AzureRoleAssignmentRequestsFilter string
@@ -327,6 +351,13 @@ func (a *AzureRoleActiveAssignment) EndTime() string {
 	return a.Properties.EndDateTime.Local().Format(time.RFC3339)
 }
 
+func (a *AzureRoleActiveAssignment) Scope() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.ID == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.ExpandedProperties.Scope.ID
+}
+
 type AzureRoleActiveAssignments []AzureRoleActiveAssignment
 
 func (c *Client) PIMAzureRoleActiveAssignments(ctx context.Context) (AzureRoleActiveAssignments, error) {
@@ -367,10 +398,105 @@ func (c *Client) PIMAzureRoleActiveAssignments(ctx context.Context) (AzureRoleAc
 					return nil, fmt.Errorf("role assignment is nil")
 				}
 
+				if v.Properties == nil || v.Properties.PrincipalType == nil {
+					return nil, fmt.Errorf("principal type is nil")
+				}
+
+				if *v.Properties.PrincipalType != armauthorization.PrincipalTypeUser {
+					continue
+				}
+
 				azureRoleActiveAssignments = append(azureRoleActiveAssignments, AzureRoleActiveAssignment(*v))
 			}
 		}
 	}
 
 	return azureRoleActiveAssignments, nil
+}
+
+func (c *Client) PIMAzureRoleAssignmentScheduleRequest(ctx context.Context, principalID string, roleDefinitionID string, justification string, startDateTime time.Time, durationHours string, scope string) (string, error) {
+	roleAssignmentScheduleRequestsClient := c.clientFactory.NewRoleAssignmentScheduleRequestsClient()
+
+	roleAssignmentScheduleRequestNameUUID, err := newUUID()
+	if err != nil {
+		return "", fmt.Errorf("failed to create uuid: %w", err)
+	}
+	roleAssignmentScheduleRequestName := roleAssignmentScheduleRequestNameUUID.String()
+	parameters := armauthorization.RoleAssignmentScheduleRequest{
+		Properties: &armauthorization.RoleAssignmentScheduleRequestProperties{
+			Justification:    &justification,
+			PrincipalID:      &principalID,
+			RequestType:      to.Ptr(armauthorization.RequestTypeSelfActivate),
+			RoleDefinitionID: &roleDefinitionID,
+			ScheduleInfo: &armauthorization.RoleAssignmentScheduleRequestPropertiesScheduleInfo{
+				Expiration: &armauthorization.RoleAssignmentScheduleRequestPropertiesScheduleInfoExpiration{
+					Type:     to.Ptr(armauthorization.TypeAfterDuration),
+					Duration: &durationHours,
+				},
+				StartDateTime: &startDateTime,
+			},
+		},
+	}
+	res, err := roleAssignmentScheduleRequestsClient.Create(ctx, scope, roleAssignmentScheduleRequestName, parameters, &armauthorization.RoleAssignmentScheduleRequestsClientCreateOptions{})
+	if err != nil {
+		return "", fmt.Errorf("failed to create role assignment schedule request: %w", err)
+	}
+
+	if res.Properties == nil || res.Properties.Status == nil {
+		return "", fmt.Errorf("role assignment schedule request status is nil")
+	}
+
+	return string(*res.Properties.Status), nil
+}
+
+func (c *Client) PIMAzureRoleGetMaximumExpirationByRoleID(ctx context.Context, scope string, roleDefinitionID string) (string, error) {
+	roleManagementPolicyAssignmentsClient, err := newRoleManagementPolicyAssignmentsClient(c.cred, c.armClientOptions)
+	if err != nil {
+		return "", fmt.Errorf("failed to create role management policy assignments client: %w", err)
+	}
+
+	pager := roleManagementPolicyAssignmentsClient.NewListForScopePager(scope, &roleManagementPolicyAssignmentsClientListForScopeOptions{
+		Filter: to.Ptr(fmt.Sprintf("roleDefinitionId eq '%s'", roleDefinitionID)),
+	})
+
+	value := &roleManagementPolicyAssignment{}
+	for pager.More() {
+		page, err := pager.NextPage(ctx)
+		if err != nil {
+			return "", fmt.Errorf("failed to get next page: %w", err)
+		}
+
+		if len(page.Value) != 1 {
+			return "", fmt.Errorf("expected 1 role management policy assignment but got %d", len(page.Value))
+		}
+
+		value = page.Value[0]
+	}
+
+	if value == nil || value.Properties == nil || value.Properties.EffectiveRules == nil {
+		return "", fmt.Errorf("role management policy assignment is nil")
+	}
+
+	if len(value.Properties.EffectiveRules) == 0 {
+		return "", fmt.Errorf("no effective rules")
+	}
+
+	for _, v := range value.Properties.EffectiveRules {
+		if v == nil || v.ID == nil || *v.ID != "Expiration_EndUser_Assignment" {
+			continue
+		}
+
+		if v.MaximumDuration == nil {
+			return "", fmt.Errorf("maximum duration is nil")
+		}
+
+		isoDuration, err := serialization.ParseISODuration(*v.MaximumDuration)
+		if err != nil {
+			return "", fmt.Errorf("failed to parse duration: %w", err)
+		}
+
+		return isoDuration.String(), nil
+	}
+
+	return "", fmt.Errorf("no expiration rule found")
 }

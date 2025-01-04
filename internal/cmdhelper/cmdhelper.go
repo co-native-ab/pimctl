@@ -102,13 +102,33 @@ func PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, graphClient *gra
 	if flagsDuration != 0 {
 		duration = fmt.Sprintf("PT%dH", flagsDuration)
 	} else {
-		duration, err = graphClient.PIMEntraRoleGetMaximumExpirationByGroupID(ctx, entraRoleID, entraRoleScopeID)
+		duration, err = graphClient.PIMEntraRoleGetMaximumExpirationByRoleID(ctx, entraRoleID, entraRoleScopeID)
 		if err != nil {
 			return "", fmt.Errorf("failed to get entra role role management policy: %w", err)
 		}
 	}
 
 	status, err := graphClient.PIMEntraRoleAssignmentScheduleRequest(ctx, me.ID, entraRoleID, justification, time.Now(), duration, entraRoleScopeID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create entra role assignment requests: %w", err)
+	}
+
+	return status, nil
+}
+
+func PIMAzureRoleAssignmentScheduleRequest(ctx context.Context, azurermClient *azurerm.Client, azureRoleEligibleAssignment azurerm.AzureRoleEligibleAssignment, flagsDuration int, justification string) (string, error) {
+	duration := ""
+	if flagsDuration != 0 {
+		duration = fmt.Sprintf("PT%dH", flagsDuration)
+	} else {
+		var err error
+		duration, err = azurermClient.PIMAzureRoleGetMaximumExpirationByRoleID(ctx, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Scope.ID, *azureRoleEligibleAssignment.Properties.RoleDefinitionID)
+		if err != nil {
+			return "", fmt.Errorf("failed to get entra role role management policy: %w", err)
+		}
+	}
+
+	status, err := azurermClient.PIMAzureRoleAssignmentScheduleRequest(ctx, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Principal.ID, *azureRoleEligibleAssignment.Properties.RoleDefinitionID, justification, time.Now(), duration, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Scope.ID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create entra role assignment requests: %w", err)
 	}

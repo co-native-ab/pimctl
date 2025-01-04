@@ -53,6 +53,7 @@ func printEligibleAzureRoleList(io *iostreams.IOStreams, azureRoleEligibleAssign
 		"MEMBERSHIP",
 		"CONDITION",
 		"END TIME",
+		"SCOPE",
 	}
 
 	table := tableprinter.New(io, tableprinter.WithHeader(headers...))
@@ -63,6 +64,7 @@ func printEligibleAzureRoleList(io *iostreams.IOStreams, azureRoleEligibleAssign
 		table.AddField(azureRoleEligibleAssignment.Membership())
 		table.AddField(azureRoleEligibleAssignment.Condition())
 		table.AddField(azureRoleEligibleAssignment.EndTime())
+		table.AddField(azureRoleEligibleAssignment.Scope())
 		table.EndRow()
 	}
 

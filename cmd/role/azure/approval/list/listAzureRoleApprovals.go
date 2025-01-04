@@ -57,6 +57,7 @@ func printAzureRoleApprovalRequestList(io *iostreams.IOStreams, azureRoleApprova
 		"REQUEST TYPE",
 		"START TIME",
 		"END TIME",
+		"SCOPE",
 	}
 
 	table := tableprinter.New(io, tableprinter.WithHeader(headers...))
@@ -71,6 +72,7 @@ func printAzureRoleApprovalRequestList(io *iostreams.IOStreams, azureRoleApprova
 		table.AddField(azureRoleAssignmentRequest.RequestType())
 		table.AddField(azureRoleAssignmentRequest.StartTime())
 		table.AddField(azureRoleAssignmentRequest.EndTime())
+		table.AddField(azureRoleAssignmentRequest.Scope())
 		table.EndRow()
 	}
 

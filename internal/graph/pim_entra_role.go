@@ -243,7 +243,7 @@ func (c *Client) PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, prin
 	return *status, nil
 }
 
-func (c *Client) PIMEntraRoleGetMaximumExpirationByGroupID(ctx context.Context, entraRoleID string, entraRoleScopeID string) (string, error) {
+func (c *Client) PIMEntraRoleGetMaximumExpirationByRoleID(ctx context.Context, entraRoleID string, entraRoleScopeID string) (string, error) {
 	roleManagementPolicyAssignmentsResponse, err := c.client.Policies().RoleManagementPolicyAssignments().Get(context.Background(), &policies.RoleManagementPolicyAssignmentsRequestBuilderGetRequestConfiguration{
 		QueryParameters: &policies.RoleManagementPolicyAssignmentsRequestBuilderGetQueryParameters{
 			Filter: to.Ptr(fmt.Sprintf("scopeId eq '%s' and scopeType eq 'Directory' and roleDefinitionId eq '%s'", entraRoleScopeID, entraRoleID)),
