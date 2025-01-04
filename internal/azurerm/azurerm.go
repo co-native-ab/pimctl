@@ -10,6 +10,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
+	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
 func prettyPrintValue[T any](data T) {
@@ -135,17 +136,30 @@ type AzureRoleAssignmentRequest armauthorization.RoleAssignmentScheduleRequest
 // Pending approval​
 
 func (a *AzureRoleAssignmentRequest) Role() string {
-	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.RoleDefinition == nil {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.RoleDefinition == nil || a.Properties.ExpandedProperties.RoleDefinition.DisplayName == nil {
 		return "UNKNOWN"
 	}
 	return *a.Properties.ExpandedProperties.RoleDefinition.DisplayName
 }
 
 func (a *AzureRoleAssignmentRequest) Resource() string {
-	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.DisplayName == nil {
 		return "UNKNOWN"
 	}
 	return *a.Properties.ExpandedProperties.Scope.DisplayName
+}
+
+func (a *AzureRoleAssignmentRequest) ResourceType() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Scope == nil || a.Properties.ExpandedProperties.Scope.Type == nil {
+		return "UNKNOWN"
+	}
+
+	switch *a.Properties.ExpandedProperties.Scope.Type {
+	case "managementgroup":
+		return "Management group"
+	}
+
+	return *a.Properties.ExpandedProperties.Scope.Type
 }
 
 func (a *AzureRoleAssignmentRequest) RequestType() string {
@@ -190,17 +204,63 @@ func (a *AzureRoleAssignmentRequest) RequestStatus() string {
 	return string(*a.Properties.Status)
 }
 
+func (a *AzureRoleAssignmentRequest) Requestor() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Principal == nil || a.Properties.ExpandedProperties.Principal.DisplayName == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.ExpandedProperties.Principal.DisplayName
+}
+
+func (a *AzureRoleAssignmentRequest) EndTime() string {
+	if a.Properties == nil || a.Properties.ScheduleInfo == nil || a.Properties.ScheduleInfo.Expiration == nil || a.Properties.ScheduleInfo.Expiration.Type == nil {
+		return "UNKNOWN"
+	}
+
+	expirationType := *a.Properties.ScheduleInfo.Expiration.Type
+
+	switch expirationType {
+	case armauthorization.TypeAfterDateTime:
+		if a.Properties.ScheduleInfo.Expiration.EndDateTime == nil {
+			return "UNKNOWN"
+		}
+		return a.Properties.ScheduleInfo.Expiration.EndDateTime.Local().Format(time.RFC3339)
+	case armauthorization.TypeAfterDuration:
+		if a.Properties.ScheduleInfo.Expiration.Duration == nil || a.Properties.ScheduleInfo.StartDateTime == nil {
+			return "UNKNOWN"
+		}
+		startTime := a.Properties.ScheduleInfo.StartDateTime
+		isoDuration, err := serialization.ParseISODuration(*a.Properties.ScheduleInfo.Expiration.Duration)
+		if err != nil {
+			return "Unable to parse duration"
+		}
+		duration, err := isoDuration.ToDuration()
+		if err != nil {
+			return "Unable to convert duration"
+		}
+		endTime := startTime.Add(duration)
+		return endTime.Local().Format(time.RFC3339)
+	case armauthorization.TypeNoExpiration:
+		return "Permanent"
+	default:
+		return "Unknown"
+	}
+}
+
 type AzureRoleAssignmentRequests []AzureRoleAssignmentRequest
 
 type AzureRoleAssignmentRequestsFilter string
 
 const (
-	AzureRoleAssignmentRequestsFilterRequestor AzureRoleAssignmentRequestsFilter = "asRequestor()"
-	AzureRoleAssignmentRequestsFilterTarget    AzureRoleAssignmentRequestsFilter = "asTarget()"
+	AzureRoleAssignmentRequestsFilterApprover AzureRoleAssignmentRequestsFilter = "asApprover()"
+	AzureRoleAssignmentRequestsFilterTarget   AzureRoleAssignmentRequestsFilter = "asTarget()"
 )
 
 func (c *Client) PIMAzureRoleAssignmentRequests(ctx context.Context) (AzureRoleAssignmentRequests, error) {
 	return c.pimAzureRoleAssignmentRequests(ctx, AzureRoleAssignmentRequestsFilterTarget)
+}
+
+func (c *Client) PIMAzureRoleApprovalRequests(ctx context.Context) (AzureRoleAssignmentRequests, error) {
+	return c.pimAzureRoleAssignmentRequests(ctx, AzureRoleAssignmentRequestsFilterApprover)
 }
 
 func (c *Client) pimAzureRoleAssignmentRequests(ctx context.Context, filter AzureRoleAssignmentRequestsFilter) (AzureRoleAssignmentRequests, error) {
