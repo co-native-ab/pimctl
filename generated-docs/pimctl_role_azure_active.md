@@ -1,15 +1,15 @@
-## pimctl role
+## pimctl role azure active
 
-Manage PIM roles
+Manage active Azure PIM roles
 
 ### Synopsis
 
-Manage PIM roles
+Manage active Azure PIM roles
 
 ### Options
 
 ```
-  -h, --help   help for role
+  -h, --help   help for active
 ```
 
 ### Options inherited from parent commands
@@ -20,7 +20,6 @@ Manage PIM roles
 
 ### SEE ALSO
 
-* [pimctl](pimctl.md)	 - CLI to manage Azure PIM roles and assignments
 * [pimctl role azure](pimctl_role_azure.md)	 - Manage Azure PIM roles
-* [pimctl role entra](pimctl_role_entra.md)	 - Manage Entra PIM roles
+* [pimctl role azure active list](pimctl_role_azure_active_list.md)	 - List active Azure roles you have access to
 

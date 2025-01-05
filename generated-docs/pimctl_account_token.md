@@ -13,6 +13,7 @@ pimctl account token [flags]
 ### Options
 
 ```
+      --arm             get token for Azure Resource Manager instead of Microsoft Graph
   -h, --help            help for token
       --output string   output format. can be 'json' or 'raw' (default "json")
 ```

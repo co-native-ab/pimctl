@@ -73,7 +73,7 @@ sudo mv "${TEMP_DIR}/pimctl" /usr/local/bin/pimctl
 
 ### How do I use pimctl?
 
-We haven't documented much of it as of right now but will in the future when it's not in alpha. Once you have installed it and set up the Entra Application, first log in using the Azure CLI (not a requirement but makes it easier to discover the client ID and tenant ID) and then run `pimctl login`. After that, you can see the subcommands by running `pimctl`. The primary commands right now are `pimctl [group|role entra] eligible menu` to request assignment and `pimctl [group|role entra] approval menu` to approve requests from other people.
+We haven't documented much of it as of right now but will in the future when it's not in alpha. Once you have installed it and set up the Entra Application, first log in using the Azure CLI (not a requirement but makes it easier to discover the client ID and tenant ID) and then run `pimctl login`. After that, you can see the subcommands by running `pimctl`. The primary commands right now are `pimctl [group|role entra|role azure] eligible menu` to request assignment and `pimctl [group|role entra|role azure] approval menu` to approve requests from other people.
 
 ### Where are the sessions/tokens cached locally?
 
