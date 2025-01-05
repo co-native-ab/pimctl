@@ -54,8 +54,8 @@ github.com/charmbracelet/x/term v0.2.1 h1:AQeHeLZ1OqSXhrAWpYUtZyX1T3zVxfpZuEQMIQ
 github.com/charmbracelet/x/term v0.2.1/go.mod h1:oQ4enTYFV7QN4m0i9mzHrViD7TQKvNEEkHUMCmsxdUg=
 github.com/cjlapao/common-go v0.0.41 h1:j30UKZJWVWIllJ66x3EOslJvIk/VjkyenrhEcH64dGM=
 github.com/cjlapao/common-go v0.0.41/go.mod h1:ao5wEp0hYMNehJiHoarSjc5dKK5wi4LvnwjXaC2SxUI=
-github.com/cli/cli/v2 v2.63.2 h1:BFuY8DnRqpBQEFjeCVh1rOnn6EwipTzOOKTb4uliG4Q=
-github.com/cli/cli/v2 v2.63.2/go.mod h1:BRHyI/pQyZg5dOlCqi/Y+e+K1ThwVnO7es3Zm/fc5aw=
+github.com/cli/cli/v2 v2.64.0 h1:l0P7t7Z5yY3j8v/cNBV/DQRSAFDglxLUdFFfvkJEIko=
+github.com/cli/cli/v2 v2.64.0/go.mod h1:VqAdgFnsVSZOx3Q8x74RViwqss+rTL+mPPEnzQib7Ik=
 github.com/cli/go-gh/v2 v2.11.1 h1:amAyfqMWQTBdue8iTmDUegGZK7c8kk6WCxD9l/wLtGI=
 github.com/cli/go-gh/v2 v2.11.1/go.mod h1:MeRoKzXff3ygHu7zP+NVTT+imcHW6p3tpuxHAzRM2xE=
 github.com/cli/safeexec v1.0.1 h1:e/C79PbXF4yYTN/wauC4tviMxEV13BwljGj0N9j+N00=
