@@ -128,7 +128,12 @@ func PIMAzureRoleAssignmentScheduleRequest(ctx context.Context, azurermClient *a
 		}
 	}
 
-	status, err := azurermClient.PIMAzureRoleAssignmentScheduleRequest(ctx, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Principal.ID, *azureRoleEligibleAssignment.Properties.RoleDefinitionID, justification, time.Now(), duration, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Scope.ID)
+	principalID, err := azurermClient.GetCurrentUserPrincipalID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get current user principal id: %w", err)
+	}
+
+	status, err := azurermClient.PIMAzureRoleAssignmentScheduleRequest(ctx, principalID, *azureRoleEligibleAssignment.Properties.RoleDefinitionID, justification, time.Now(), duration, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Scope.ID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create entra role assignment requests: %w", err)
 	}

@@ -2,6 +2,7 @@ package eligible
 
 import (
 	"github.com/co-native-ab/pimctl/cmd/role/azure/eligible/list"
+	"github.com/co-native-ab/pimctl/cmd/role/azure/eligible/menu"
 
 	"github.com/spf13/cobra"
 )
@@ -14,4 +15,5 @@ var Cmd = &cobra.Command{
 
 func init() {
 	Cmd.AddCommand(list.Cmd)
+	Cmd.AddCommand(menu.Cmd)
 }

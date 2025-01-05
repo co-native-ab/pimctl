@@ -15,6 +15,7 @@ import (
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
 	"github.com/co-native-ab/pimctl/internal/credentials"
+	"github.com/lestrrat-go/jwx/jwt"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
@@ -51,6 +52,33 @@ func NewClient(cred azcore.TokenCredential) (*Client, error) {
 			},
 		},
 	}, nil
+}
+
+func (c *Client) GetCurrentUserPrincipalID(ctx context.Context) (string, error) {
+	token, err := c.cred.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes:    []string{credentials.AzureResourceManagerScope},
+		EnableCAE: true,
+	})
+	if err != nil {
+		return "", fmt.Errorf("failed to get token: %w", err)
+	}
+
+	parsedToken, err := jwt.ParseString(token.Token)
+	if err != nil {
+		return "", fmt.Errorf("failed to parse token: %w", err)
+	}
+
+	oidRaw, ok := parsedToken.Get("oid")
+	if !ok {
+		return "", fmt.Errorf("failed to get oid")
+	}
+
+	oid, ok := oidRaw.(string)
+	if !ok {
+		return "", fmt.Errorf("failed to convert oid to string")
+	}
+
+	return oid, nil
 }
 
 type AzureRoleEligibleAssignment armauthorization.RoleEligibilityScheduleInstance

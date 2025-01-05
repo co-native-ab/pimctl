@@ -19,6 +19,20 @@ func TitleCase(s string) string {
 	return strings.ToUpper(string(s[0])) + s[1:]
 }
 
+func LongestStringLengthFn[T any](fn func(T) string, defaultLength int, input []T) int {
+	maxLength := defaultLength
+	for _, item := range input {
+		result := fn(item)
+
+		length := len(result)
+		if length > maxLength {
+			maxLength = length
+		}
+	}
+
+	return maxLength
+}
+
 func LongestStringLength[T any](property string, defaultLength int, input []T) int {
 	jsonBytes, err := json.Marshal(input)
 	if err != nil {
@@ -31,7 +45,7 @@ func LongestStringLength[T any](property string, defaultLength int, input []T) i
 		return defaultLength
 	}
 
-	maxLength := 0
+	maxLength := defaultLength
 	for _, item := range data {
 		result, err := jsonpath.Get(fmt.Sprintf("$.%s", property), item)
 		if err != nil {
