@@ -21,5 +21,6 @@ Manage PIM roles
 ### SEE ALSO
 
 * [pimctl](pimctl.md)	 - CLI to manage Azure PIM roles and assignments
+* [pimctl role azure](pimctl_role_azure.md)	 - Manage Azure PIM roles
 * [pimctl role entra](pimctl_role_entra.md)	 - Manage Entra PIM roles
 

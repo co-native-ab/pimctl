@@ -37,15 +37,15 @@ func listActiveEntraRoles(ctx context.Context) error {
 	}
 
 	io := iostreams.System()
-	err = printActiveGroupsList(io, entraRoleActiveAssignments)
+	err = printActiveEntraRolesList(io, entraRoleActiveAssignments)
 	if err != nil {
-		return fmt.Errorf("failed to print eligible groups: %w", err)
+		return fmt.Errorf("failed to print active entra roles: %w", err)
 	}
 
 	return nil
 }
 
-func printActiveGroupsList(io *iostreams.IOStreams, entraRoleActiveAssignments graph.EntraRoleActiveAssignments) error {
+func printActiveEntraRolesList(io *iostreams.IOStreams, entraRoleActiveAssignments graph.EntraRoleActiveAssignments) error {
 	headers := []string{
 		"ROLE",
 		"SCOPE",

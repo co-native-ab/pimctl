@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/co-native-ab/pimctl/internal/azurerm"
 	"github.com/co-native-ab/pimctl/internal/credentials"
 	"github.com/co-native-ab/pimctl/internal/graph"
 	"github.com/spf13/viper"
@@ -16,7 +17,7 @@ func NewUncachedCredential(credentialMethod credentials.CredentialMethod, tenant
 	return credentials.NewUncached(credentialMethod, tenantID, clientID, scopes, profileName)
 }
 
-func NewCachedCredential() (*credentials.Credential, []string, error) {
+func NewCachedCredential() (*credentials.Credential, error) {
 	profileName := viper.GetString("profile")
 	return credentials.NewCached(profileName)
 }
@@ -27,18 +28,31 @@ func ClearCachedCredential() error {
 }
 
 func NewGraphClientWithCachedCredential() (*graph.Client, error) {
-	profileName := viper.GetString("profile")
-	cred, scopes, err := credentials.NewCached(profileName)
+	cred, err := NewCachedCredential()
 	if err != nil {
 		return nil, fmt.Errorf("failed to create cached credential: %w", err)
 	}
 
-	graphClient, err := graph.NewClient(cred, scopes)
+	graphClient, err := graph.NewClient(cred, []string{credentials.MicrosoftGraphScope})
 	if err != nil {
 		return nil, fmt.Errorf("failed to create graph client: %w", err)
 	}
 
 	return graphClient, nil
+}
+
+func NewAzurermClientWithCachedCredential() (*azurerm.Client, error) {
+	cred, err := NewCachedCredential()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create cached credential: %w", err)
+	}
+
+	azurermClient, err := azurerm.NewClient(cred)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create azurerm client: %w", err)
+	}
+
+	return azurermClient, nil
 }
 
 func GetCachedCredentialAuthenticationRecord() (azidentity.AuthenticationRecord, error) {
@@ -88,13 +102,38 @@ func PIMEntraRoleAssignmentScheduleRequest(ctx context.Context, graphClient *gra
 	if flagsDuration != 0 {
 		duration = fmt.Sprintf("PT%dH", flagsDuration)
 	} else {
-		duration, err = graphClient.PIMEntraRoleGetMaximumExpirationByGroupID(ctx, entraRoleID, entraRoleScopeID)
+		duration, err = graphClient.PIMEntraRoleGetMaximumExpirationByRoleID(ctx, entraRoleID, entraRoleScopeID)
 		if err != nil {
 			return "", fmt.Errorf("failed to get entra role role management policy: %w", err)
 		}
 	}
 
 	status, err := graphClient.PIMEntraRoleAssignmentScheduleRequest(ctx, me.ID, entraRoleID, justification, time.Now(), duration, entraRoleScopeID)
+	if err != nil {
+		return "", fmt.Errorf("failed to create entra role assignment requests: %w", err)
+	}
+
+	return status, nil
+}
+
+func PIMAzureRoleAssignmentScheduleRequest(ctx context.Context, azurermClient *azurerm.Client, azureRoleEligibleAssignment azurerm.AzureRoleEligibleAssignment, flagsDuration int, justification string) (string, error) {
+	duration := ""
+	if flagsDuration != 0 {
+		duration = fmt.Sprintf("PT%dH", flagsDuration)
+	} else {
+		var err error
+		duration, err = azurermClient.PIMAzureRoleGetMaximumExpirationByRoleID(ctx, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Scope.ID, *azureRoleEligibleAssignment.Properties.RoleDefinitionID)
+		if err != nil {
+			return "", fmt.Errorf("failed to get entra role role management policy: %w", err)
+		}
+	}
+
+	principalID, err := azurermClient.GetCurrentUserPrincipalID(ctx)
+	if err != nil {
+		return "", fmt.Errorf("failed to get current user principal id: %w", err)
+	}
+
+	status, err := azurermClient.PIMAzureRoleAssignmentScheduleRequest(ctx, principalID, *azureRoleEligibleAssignment.Properties.RoleDefinitionID, justification, time.Now(), duration, *azureRoleEligibleAssignment.Properties.ExpandedProperties.Scope.ID)
 	if err != nil {
 		return "", fmt.Errorf("failed to create entra role assignment requests: %w", err)
 	}

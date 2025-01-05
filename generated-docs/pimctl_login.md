@@ -16,8 +16,7 @@ pimctl login [flags]
       --client-id string                     Entra Application Client ID for pimctl
       --credential-method CredentialMethod   Credential method to use for pimctl. Allowed: 'DeviceCode', 'InteractiveBrowser' (default InteractiveBrowser)
   -h, --help                                 help for login
-      --scopes strings                       OAuth2 scopes to request for pimctl (default [https://graph.microsoft.com/.default])
-      --tenant-id string                     Azure AD Tenant ID for the current user
+      --tenant-id string                     Entra Tenant ID to use for login (default "organizations")
 ```
 
 ### Options inherited from parent commands
