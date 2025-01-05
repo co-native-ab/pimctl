@@ -4,12 +4,17 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/arm"
+	"github.com/Azure/azure-sdk-for-go/sdk/azcore/policy"
 	"github.com/Azure/azure-sdk-for-go/sdk/azcore/to"
 	"github.com/Azure/azure-sdk-for-go/sdk/resourcemanager/authorization/armauthorization/v3"
+	"github.com/co-native-ab/pimctl/internal/credentials"
 	"github.com/microsoft/kiota-abstractions-go/serialization"
 )
 
@@ -26,6 +31,7 @@ type Client struct {
 	clientFactory    *armauthorization.ClientFactory
 	cred             azcore.TokenCredential
 	armClientOptions *arm.ClientOptions
+	httpClient       *http.Client
 }
 
 func NewClient(cred azcore.TokenCredential) (*Client, error) {
@@ -38,6 +44,12 @@ func NewClient(cred azcore.TokenCredential) (*Client, error) {
 		clientFactory:    clientFactory,
 		cred:             cred,
 		armClientOptions: armClientOptions,
+		httpClient: &http.Client{
+			Transport: &http.Transport{
+				MaxIdleConns:        20,
+				MaxIdleConnsPerHost: 20,
+			},
+		},
 	}, nil
 }
 
@@ -250,6 +262,13 @@ func (a *AzureRoleAssignmentRequest) Scope() string {
 		return "UNKNOWN"
 	}
 	return *a.Properties.ExpandedProperties.Scope.ID
+}
+
+func (a *AzureRoleAssignmentRequest) PrincipalEmail() string {
+	if a.Properties == nil || a.Properties.ExpandedProperties == nil || a.Properties.ExpandedProperties.Principal == nil || a.Properties.ExpandedProperties.Principal.Email == nil {
+		return "UNKNOWN"
+	}
+	return *a.Properties.ExpandedProperties.Principal.Email
 }
 
 type AzureRoleAssignmentRequests []AzureRoleAssignmentRequest
@@ -499,4 +518,115 @@ func (c *Client) PIMAzureRoleGetMaximumExpirationByRoleID(ctx context.Context, s
 	}
 
 	return "", fmt.Errorf("no expiration rule found")
+}
+
+type roleAssignmentApprovalsBatchRequest struct {
+	URL        string `json:"url"`
+	HTTPMethod string `json:"httpMethod"`
+	Content    struct {
+		Properties struct {
+			ReviewResult  string `json:"reviewResult"`
+			Justification string `json:"justification"`
+		} `json:"properties"`
+	} `json:"content"`
+	Name string `json:"name"`
+}
+
+type roleAssignmentApprovalsBatchRequests struct {
+	Requests []roleAssignmentApprovalsBatchRequest `json:"requests"`
+}
+
+type roleAssignmentApprovalsBatchRespone struct {
+	Name           string            `json:"name"`
+	HTTPStatusCode int               `json:"httpStatusCode"`
+	Headers        map[string]string `json:"headers"`
+	ContentLength  int               `json:"contentLength"`
+}
+
+type roleAssignmentApprovalsBatchResponses struct {
+	Responses []roleAssignmentApprovalsBatchRespone `json:"responses"`
+}
+
+func (c *Client) PIMAzureRoleAssignmentApprovalByApprovalID(ctx context.Context, approvalID string, justification string, reviewResult ReviewResult) error {
+	// NOTE: The roleAssignmentApprovals API doesn't exist in the SDK. I can't get it to work when using it directly.
+	//       The Azure portal is using the batch API to do this, which we replicate here and it's working.
+	if !strings.HasPrefix(approvalID, "/providers/Microsoft.Authorization/roleAssignmentApprovals/") {
+		return fmt.Errorf("approval ID must not start with /providers/Microsoft.Authorization/roleAssignmentApprovals/ but was: %s", approvalID)
+	}
+
+	parts := strings.Split(approvalID, "/")
+	approvalUUID := parts[len(parts)-1]
+	batchRequest := roleAssignmentApprovalsBatchRequest{}
+	batchRequest.URL = fmt.Sprintf("/providers/Microsoft.Authorization/roleAssignmentApprovals/%s/stages/%s?api-version=2021-01-01-preview", approvalUUID, approvalUUID)
+	batchRequest.HTTPMethod = "PUT"
+	batchRequest.Content.Properties.ReviewResult = reviewResult.String()
+	batchRequest.Content.Properties.Justification = justification
+	randomUUID, err := newUUID()
+	if err != nil {
+		return fmt.Errorf("failed to create uuid: %w", err)
+	}
+	batchRequest.Name = randomUUID.String()
+	batchRequests := roleAssignmentApprovalsBatchRequests{
+		Requests: []roleAssignmentApprovalsBatchRequest{batchRequest},
+	}
+
+	batchRequestBytes, err := json.Marshal(batchRequests)
+	if err != nil {
+		return fmt.Errorf("failed to marshal batch request: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, "https://management.azure.com/batch?api-version=2020-06-01", strings.NewReader(string(batchRequestBytes)))
+	if err != nil {
+		return fmt.Errorf("failed to create http request: %w", err)
+	}
+
+	token, err := c.cred.GetToken(ctx, policy.TokenRequestOptions{
+		Scopes:    []string{credentials.AzureResourceManagerScope},
+		EnableCAE: true,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to get token: %w", err)
+	}
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", token.Token))
+	req.Header.Set("Content-Type", "application/json")
+
+	res, err := c.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("failed to send http request: %w", err)
+	}
+
+	defer res.Body.Close()
+
+	if res.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", res.StatusCode)
+	}
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read body: %w", err)
+	}
+
+	resBody := roleAssignmentApprovalsBatchResponses{}
+	err = json.Unmarshal(body, &resBody)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal body: %w", err)
+	}
+
+	if len(resBody.Responses) != 1 {
+		return fmt.Errorf("expected 1 response but got %d", len(resBody.Responses))
+	}
+
+	if resBody.Responses[0].HTTPStatusCode != http.StatusNoContent {
+		return fmt.Errorf("expected status code %d but got %d", http.StatusNoContent, resBody.Responses[0].HTTPStatusCode)
+	}
+
+	if resBody.Responses[0].ContentLength != 0 {
+		return fmt.Errorf("expected content length 0 but got %d", resBody.Responses[0].ContentLength)
+	}
+
+	if resBody.Responses[0].Name != batchRequest.Name {
+		return fmt.Errorf("expected name %s but got %s", batchRequest.Name, resBody.Responses[0].Name)
+	}
+
+	return nil
 }
