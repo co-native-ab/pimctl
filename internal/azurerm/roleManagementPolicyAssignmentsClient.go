@@ -35,7 +35,6 @@
 // SOFTWARE.
 // ---
 
-
 package azurerm
 
 import (
@@ -76,28 +75,28 @@ type roleManagementPolicyAssignmentsClientListForScopeResponse struct {
 
 type roleManagementPolicyAssignmentListResult struct {
 	NextLink *string
-	Value []*roleManagementPolicyAssignment
+	Value    []*roleManagementPolicyAssignment
 }
 
 type roleManagementPolicyAssignment struct {
 	Properties *roleManagementPolicyAssignmentProperties
-	ID *string
-	Name *string
-	Type *string
+	ID         *string
+	Name       *string
+	Type       *string
 }
 
 type roleManagementPolicyAssignmentPropertiesEffectiveRule struct {
 	MaximumDuration *string
-	ID *string
+	ID              *string
 }
 
 type roleManagementPolicyAssignmentProperties struct {
-	PolicyID *string
-	RoleDefinitionID *string
-	Scope *string
+	PolicyID                   *string
+	RoleDefinitionID           *string
+	Scope                      *string
 	PolicyAssignmentProperties *armauthorization.PolicyAssignmentProperties
 	// NOTE: Added EffectiveRules field
-	EffectiveRules  []*roleManagementPolicyAssignmentPropertiesEffectiveRule
+	EffectiveRules []*roleManagementPolicyAssignmentPropertiesEffectiveRule
 }
 
 type roleManagementPolicyAssignmentsClientListForScopeOptions struct {
