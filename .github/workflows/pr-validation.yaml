@@ -102,12 +102,12 @@ jobs:
           TEMP_DIR=$(mktemp -d)
           curl --fail -o ${TEMP_DIR}/linux-x64.zip -L https://github.com/microsoft/kiota/releases/download/v1.21.0/linux-x64.zip
           env --chdir=${TEMP_DIR} unzip linux-x64.zip
-          PATH=${TEMP_DIR}:${PATH} make generate-sdk
+          PATH=${TEMP_DIR}:${PATH} make generate-sdks
       - name: Check if working tree is dirty
         run: |
           if [[ $(git status --porcelain) ]]; then
             git diff
-            echo 'run make make generate-sdk and commit changes'
+            echo 'run make make generate-sdks and commit changes'
             exit 1
           fi
 
