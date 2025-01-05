@@ -299,6 +299,13 @@ func (a *AzureRoleAssignmentRequest) PrincipalEmail() string {
 	return *a.Properties.ExpandedProperties.Principal.Email
 }
 
+func (a *AzureRoleAssignmentRequest) Justification() string {
+	if a.Properties == nil || a.Properties.Justification == nil {
+		return ""
+	}
+	return *a.Properties.Justification
+}
+
 type AzureRoleAssignmentRequests []AzureRoleAssignmentRequest
 
 type AzureRoleAssignmentRequestsFilter string
