@@ -1,6 +1,6 @@
 {
   "descriptionHash": "D27FDD237D168F478ADDEAB5F473511A866A9089208E13EA534221CCA8F37D9C0E38D38C3963CCBDBA63A1D34B6953F44C44D7F90BB5684B8F30CB608E1D2208",
-  "descriptionLocation": "../../../msgraph/openapi/openapi_v1.0.yaml",
+  "descriptionLocation": "../../../openapi/msgraph_openapi_v1.0.yaml",
   "lockFileVersion": "1.0.0",
   "kiotaVersion": "1.21.0",
   "clientClassName": "msgraphsdk",
