@@ -31,6 +31,10 @@ var RootCmd = &cobra.Command{
 		switch {
 		case slices.Contains([]string{"login", "account clear", "account show", "account token"}, command):
 			return nil
+		case strings.HasPrefix(command, "help"):
+			return nil
+		case strings.HasPrefix(command, "completion"):
+			return nil
 		case strings.HasPrefix(command, "group"):
 			if !isLoggedInMSGraph(cmd.Context()) {
 				return fmt.Errorf("not logged in, run 'login' to continue")
