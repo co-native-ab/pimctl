@@ -13,7 +13,7 @@ require (
 	github.com/charmbracelet/glamour v0.8.0
 	github.com/charmbracelet/lipgloss v1.0.0
 	github.com/cli/cli/v2 v2.63.2
-	github.com/cli/go-gh/v2 v2.11.1
+	github.com/cli/go-gh/v2 v2.11.2
 	github.com/google/uuid v1.6.0
 	github.com/lestrrat-go/jwx v1.2.30
 	github.com/microsoft/kiota-abstractions-go v1.8.1
