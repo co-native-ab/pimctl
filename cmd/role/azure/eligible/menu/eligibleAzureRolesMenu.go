@@ -58,7 +58,8 @@ func eligibleAzureRolesMenu(ctx context.Context) error {
 	justification := justificationResult.textInput.Value()
 	statuses := []string{}
 	for _, role := range selectedAzureRoles {
-		status, err := cmdhelper.PIMAzureRoleAssignmentScheduleRequest(ctx, azurermClient, role, 0, justification)
+		originalStatus, originalErr := cmdhelper.PIMAzureRoleAssignmentScheduleRequest(ctx, azurermClient, role, 0, justification)
+		status, err := cmdhelper.PIMAssignmentScheduleRequestStatusRewrite(originalStatus, originalErr)
 		if err != nil {
 			return fmt.Errorf("failed to schedule role assignment request for %s (%s): %w", role.Role(), role.Scope(), err)
 		}

@@ -59,7 +59,8 @@ func eligibleGroupsMenu(ctx context.Context) error {
 	justification := justificationResult.textInput.Value()
 	statuses := []string{}
 	for _, group := range selectedGroups {
-		status, err := cmdhelper.PIMGroupAssignmentScheduleRequest(ctx, graphClient, 0, group.GroupID, justification)
+		originalStatus, originalErr := cmdhelper.PIMGroupAssignmentScheduleRequest(ctx, graphClient, 0, group.GroupID, justification)
+		status, err := cmdhelper.PIMAssignmentScheduleRequestStatusRewrite(originalStatus, originalErr)
 		if err != nil {
 			return fmt.Errorf("failed to schedule group assignment request for %s: %w", group.Group.DisplayName, err)
 		}
