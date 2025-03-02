@@ -3,6 +3,7 @@ package cmdhelper
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
@@ -139,4 +140,20 @@ func PIMAzureRoleAssignmentScheduleRequest(ctx context.Context, azurermClient *a
 	}
 
 	return status, nil
+}
+
+func PIMAssignmentScheduleRequestStatusRewrite(status string, err error) (string, error) {
+	if err == nil {
+		return status, nil
+	}
+
+	if strings.Contains(err.Error(), "There is already an existing pending Role assignment request") {
+		return "PendingApprovalProvisioning", nil
+	}
+
+	if strings.Contains(err.Error(), "The Role assignment already exists") {
+		return "Activated", nil
+	}
+
+	return "", err
 }

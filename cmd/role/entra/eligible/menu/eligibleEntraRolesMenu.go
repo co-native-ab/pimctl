@@ -82,7 +82,8 @@ func eligibleEntraRolesMenu(ctx context.Context, opts *eligibleEntraRolesMenuOpt
 	justification := justificationResult.textInput.Value()
 	statuses := []string{}
 	for _, group := range selectedEntraRoles {
-		status, err := cmdhelper.PIMEntraRoleAssignmentScheduleRequest(ctx, graphClient, 0, group.RoleDefinitionID, justification, opts.entraRoleScopeID)
+		originalStatus, originalErr := cmdhelper.PIMEntraRoleAssignmentScheduleRequest(ctx, graphClient, 0, group.RoleDefinitionID, justification, opts.entraRoleScopeID)
+		status, err := cmdhelper.PIMAssignmentScheduleRequestStatusRewrite(originalStatus, originalErr)
 		if err != nil {
 			return fmt.Errorf("failed to schedule group assignment request for %s: %w", group.RoleDefinition.DisplayName, err)
 		}
