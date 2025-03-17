@@ -1,7 +1,6 @@
 module github.com/co-native-ab/pimctl
 
 go 1.23.1
-
 require (
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.17.0
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.8.1
@@ -16,11 +15,11 @@ require (
 	github.com/cli/go-gh/v2 v2.11.2
 	github.com/google/uuid v1.6.0
 	github.com/lestrrat-go/jwx v1.2.30
-	github.com/microsoft/kiota-abstractions-go v1.8.1
+	github.com/microsoft/kiota-abstractions-go v1.9.0
 	github.com/microsoft/kiota-serialization-form-go v1.0.0
 	github.com/microsoft/kiota-serialization-json-go v1.0.9
 	github.com/microsoft/kiota-serialization-multipart-go v1.0.0
-	github.com/microsoft/kiota-serialization-text-go v1.0.0
+	github.com/microsoft/kiota-serialization-text-go v1.1.0
 	github.com/microsoftgraph/msgraph-sdk-go-core v1.2.1
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
@@ -91,15 +90,15 @@ require (
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
 	github.com/spf13/cast v1.7.1 // indirect
-	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.1 // indirect
+	github.com/std-uritemplate/std-uritemplate/go/v2 v2.0.3 // indirect
 	github.com/stretchr/testify v1.10.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/yuin/goldmark v1.7.8 // indirect
 	github.com/yuin/goldmark-emoji v1.0.4 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/otel v1.33.0 // indirect
-	go.opentelemetry.io/otel/metric v1.33.0 // indirect
-	go.opentelemetry.io/otel/trace v1.33.0 // indirect
+	go.opentelemetry.io/otel v1.35.0 // indirect
+	go.opentelemetry.io/otel/metric v1.35.0 // indirect
+	go.opentelemetry.io/otel/trace v1.35.0 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67 // indirect
